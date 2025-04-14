@@ -1,0 +1,64 @@
+Preciso de ajuda para criar uma aplicação fullstack com:
+
+    Backend: Laravel (PHP)
+
+    Frontend: Vue.js (Node.js)
+
+    Banco de dados: MySQL (PostgreSQL)
+
+Requisitos:
+
+    Estrutura do Projeto:
+    
+        /backend (Laravel)
+        /frontend (Vue.js)
+
+    Configuração Docker:
+
+        Crie um docker-compose.yml com os seguintes serviços:
+
+            app (Laravel + PHP-FPM)
+
+            frontend (Node.js para Vue.js em modo dev ou build estático)
+
+            db (PostgreSQL)
+
+            redis
+
+        Use imagens oficiais (ex: php:8.2-fpm, node:18).
+
+        Configure volumes para sincronização de código em desenvolvimento.
+
+    Dependências:
+
+        Backend: Instale composer dependencies via Docker.
+
+        Frontend: Instale npm packages e rode npm run dev ou npm run build.
+
+    Ambiente:
+
+        Configure .env para Laravel com conexão ao container do banco e Redis.
+
+        Exponha portas necessárias.
+
+    Extras:
+
+        Adicione um Dockerfile para cada serviço.
+
+        Inclua comandos para rodar migrations e seeders.
+
+        Configure o Hot Module Replacement (HMR) para Vue.js em desenvolvimento.
+
+Entregáveis esperados:
+
+    Arquivos docker-compose.yml e Dockerfiles bem comentados.
+
+    Instruções claras para build/execução em development.
+
+    Solução para problemas comuns (permissões Laravel, hot-reload Vue.js).
+
+    Hello word acessível no localhost com frontend e backend e database testado e funcionando.
+
+importante:
+
+    para esta versao instalada do docker o comando docker-compose deve ser feito sem o '-' juntando o comando sendo: docker compose

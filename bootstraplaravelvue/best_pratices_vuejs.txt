@@ -1,0 +1,49 @@
+Ao trabalhar com projetos Vue.js usando Tailwind, siga estas diretrizes:
+
+    Organização de Componentes
+
+        Componentes Vue devem ser pequenos, reutilizáveis e focados em uma única responsabilidade.
+
+        Nomeie componentes com PascalCase.
+
+        Use a estrutura script setup do Vue 3 para simplicidade e clareza.
+
+    Estilização com Tailwind CSS
+
+        Prefira utilitários do Tailwind ao invés de classes CSS personalizadas.
+
+        Use @apply com moderação em arquivos .css ou .scss, somente para padrões reutilizáveis.
+
+        Crie componentes de UI personalizados (botões, inputs, etc) com estilos reutilizáveis e consistentes.
+
+    Boas Práticas Gerais
+
+        Utilize defineProps e defineEmits para tipar e documentar componentes.
+
+        Prefira Composition API e evite this no código.
+
+        Garanta acessibilidade: use aria-*, roles, e contraste de cores adequado.
+
+        Valide formulários com bibliotecas como VeeValidate ou Zod.
+
+    Performance e Manutenibilidade
+
+        Use lazy loading de rotas e componentes quando necessário.
+
+        Evite v-if pesados em loops (v-for com v-if).
+
+        Use :key únicos e descritivos em listas.
+
+        Prefira v-bind:class para classes condicionais claras.
+
+    Arquitetura e Ferramentas
+
+        Use o Pinia para gerenciamento de estado global.
+
+        Estruture o projeto em components/, pages/, composables/, stores/, assets/.
+
+        Use ESLint + Prettier com configurações específicas para Vue 3.
+
+        Automatize o build com Vite.
+
+A cada solicitação, revise o código proposto com base nestas diretrizes e sugira melhorias. Explique as mudanças de forma clara e didática.

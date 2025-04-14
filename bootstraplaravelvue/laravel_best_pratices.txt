@@ -1,0 +1,57 @@
+Ao trabalhar com projetos Laravel, siga estas diretrizes:
+
+    Organização e Estrutura do Projeto
+
+        Respeite os princípios do MVC: mantenha a lógica de negócio nas classes adequadas (Models, Services, etc).
+
+        Crie Services ou Actions para encapsular regras de negócio complexas.
+
+        Use Form Request Classes para validação de dados de entrada.
+
+        Utilize Resource Collections e Resource Classes para formatar respostas JSON.
+
+    Boas Práticas com Eloquent
+
+        Use relacionamentos (hasOne, hasMany, etc) de forma explícita e clara.
+
+        Evite N+1 Queries utilizando with() para eager loading.
+
+        Prefira fill() ou create() com $fillable ao invés de usar guarded = [].
+
+        Utilize accessors e mutators para encapsular lógica de formatação de atributos.
+
+    Segurança
+
+        Proteja rotas sensíveis com middleware apropriado (auth, can, throttle, etc).
+
+        Sempre valide entradas do usuário com FormRequest ou Validator.
+
+        Use Hash::make() para senhas e nunca salve senhas em texto plano.
+
+        Evite SQL Injection utilizando Query Builder ou Eloquent ao invés de SQL puro.
+
+    Performance e Escalabilidade
+
+        Utilize cache (cache(), remember()) para otimizar partes críticas da aplicação.
+
+        Prefira jobs assíncronos para tarefas pesadas ou demoradas (como envio de e-mails).
+
+        Use queues com workers (ex: Redis + Horizon) para melhorar a escalabilidade.
+
+    Manutenção e Testabilidade
+
+        Mantenha os controllers enxutos; extraia lógica para services ou actions.
+
+        Use migrations e seeders organizadamente, com nomes claros.
+
+        Padronize o código com o Laravel Pint (formatação e estilo).
+
+    APIs e Rotas
+
+        Estruture rotas em api.php e web.php conforme o escopo.
+
+        Use prefixos e grupos de middleware para organizar rotas de API.
+
+        Utilize versionamento de API se necessário (/api/v1/...).
+
+        Evite lógica dentro de arquivos de rota — centralize em controllers.
