@@ -28,3 +28,6 @@ Route::get('/hello', function () {
         'redis_connected' => Redis::connection()->ping() ? true : false,
     ];
 });
+
+// Rotas para o CRUD de obras
+Route::apiResource('obras', \App\Http\Controllers\ObraController::class);
