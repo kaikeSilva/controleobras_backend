@@ -1,37 +1,14 @@
 leia o arquivo best_pratices_vuejs.txt
 leia o arquivo laravel_best_pratices.txt
-leio o arquivo escopo.txt
 
 com base nestes arquivos, implemente a funcionalidade solicitada.
 
-Crie o CRUD de obras no sistema.
-1. Obra
+leia o arquivo design.txt e faça o redesign do sistema baseado nele.
 
-    Atributos:
-
-        Nome da obra
-
-        Descrição
-
-        Endereço
-
-        Data de início
-
-        Prazo estimado
-
-        Área em m²
-
-        Valor estimado de execução
-
-        Taxa de administração (%)
-
-crie o crud completo com pagina de obras, criar, editar, visualizar e deletar.
-faça paginacao, filtros, ordenacao e validacao de dados no backend.
-construa de forma responsiva no frontend. use o tailwindcss. contrua uma interface moderna e intuitiva.
 
 A cada solicitação, revise o código proposto com base nestas diretrizes.
 nao crie nenhum codigo que nao tenha haver com a funcionalidade solicitada.
 lembre-se de rodar os comandos no container pois a aplicacao e dockerizada.
-lembre-se o comando docker compose e sem o - : docker composr
+lembre-se o comando docker compose e sem o - : docker compose
 
 

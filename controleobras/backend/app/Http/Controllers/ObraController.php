@@ -20,32 +20,30 @@ class ObraController extends Controller
     public function index(Request $request)
     {
         $query = Obra::query();
-        
-        // Aplicar filtros
-        if ($request->has('nome')) {
-            $query->where('nome', 'like', '%' . $request->nome . '%');
+
+        // Aplicar filtros dinâmicos com case-insensitive
+        $filters = ['nome', 'endereco', 'data_inicio', 'prazo_estimado'];
+        foreach ($filters as $filter) {
+            if ($request->has($filter)) {
+                $query->whereRaw('LOWER(' . $filter . ') LIKE ?', ['%' . strtolower($request->get($filter)) . '%']);
+            }
         }
-        
-        if ($request->has('endereco')) {
-            $query->where('endereco', 'like', '%' . $request->endereco . '%');
-        }
-        
+
         // Ordenação
         $sortField = $request->get('sort_by', 'created_at');
         $sortDirection = $request->get('sort_direction', 'desc');
-        
-        // Validar campos de ordenação permitidos
+
         $allowedSortFields = ['nome', 'data_inicio', 'prazo_estimado', 'area_m2', 'valor_estimado', 'created_at'];
-        
         if (in_array($sortField, $allowedSortFields)) {
             $query->orderBy($sortField, $sortDirection === 'asc' ? 'asc' : 'desc');
         } else {
             $query->orderBy('created_at', 'desc');
         }
-        
+
         // Paginação
-        $perPage = $request->get('per_page', 10);
-        
+        $perPage = (int) $request->get('per_page', 10);
+        $perPage = max(1, min($perPage, 100)); // Limitar entre 1 e 100
+
         return ObraResource::collection($query->paginate($perPage));
     }
 

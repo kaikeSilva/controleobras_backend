@@ -27,6 +27,19 @@
                 @keyup.enter="loadObras"
               />
             </div>
+            <div class="w-full sm:w-1/2">
+              <label for="perPage" class="block text-sm font-medium text-gray-700 mb-1">Itens por Página</label>
+              <select
+                id="perPage"
+                v-model="filters.per_page"
+                @change="loadObras"
+                class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
+              >
+                <option v-for="option in [1, 5, 10, 50, 100]" :key="option" :value="option">
+                  {{ option }}
+                </option>
+              </select>
+            </div>
           </div>
           <div class="flex space-x-2">
             <AppButton @click="loadObras">Filtrar</AppButton>
