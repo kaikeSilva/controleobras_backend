@@ -1,51 +1,71 @@
 <template>
   <AppLayout title="Gerenciamento de Obras">
-    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="bg-white shadow overflow-hidden rounded-lg">
       <!-- Filtros e Ações -->
-      <div class="px-4 py-5 sm:p-6 border-b border-gray-200">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-          <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0 w-full md:w-2/3">
+      <div class="px-6 py-6 border-b border-gray-200">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-6 md:space-y-0">
+          <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-6 sm:space-y-0 w-full md:w-2/3">
             <div class="w-full sm:w-1/2">
-              <label for="nome" class="block text-sm font-medium text-gray-700 mb-1">Nome da Obra</label>
-              <input
-                id="nome"
-                v-model="filters.nome"
-                type="text"
-                placeholder="Filtrar por nome"
-                class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                @keyup.enter="loadObras"
-              />
+              <label for="nome" class="block text-sm font-medium text-gray-700 mb-2">Nome da Obra</label>
+              <div class="relative">
+                <input
+                  id="nome"
+                  v-model="filters.nome"
+                  type="text"
+                  placeholder="Filtrar por nome"
+                  class="w-full rounded-lg border shadow-sm transition-all duration-200 h-11 bg-white pl-4 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 focus:outline-none"
+                  @keyup.enter="loadObras"
+                />
+              </div>
             </div>
             <div class="w-full sm:w-1/2">
-              <label for="endereco" class="block text-sm font-medium text-gray-700 mb-1">Endereço</label>
-              <input
-                id="endereco"
-                v-model="filters.endereco"
-                type="text"
-                placeholder="Filtrar por endereço"
-                class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                @keyup.enter="loadObras"
-              />
+              <label for="endereco" class="block text-sm font-medium text-gray-700 mb-2">Endereço</label>
+              <div class="relative">
+                <input
+                  id="endereco"
+                  v-model="filters.endereco"
+                  type="text"
+                  placeholder="Filtrar por endereço"
+                  class="w-full rounded-lg border shadow-sm transition-all duration-200 h-11 bg-white pl-4 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 focus:outline-none"
+                  @keyup.enter="loadObras"
+                />
+              </div>
             </div>
             <div class="w-full sm:w-1/2">
-              <label for="perPage" class="block text-sm font-medium text-gray-700 mb-1">Itens por Página</label>
-              <select
-                id="perPage"
-                v-model="filters.per_page"
-                @change="loadObras"
-                class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
-              >
-                <option v-for="option in [1, 5, 10, 50, 100]" :key="option" :value="option">
-                  {{ option }}
-                </option>
-              </select>
+              <label for="perPage" class="block text-sm font-medium text-gray-700 mb-2">Itens por Página</label>
+              <div class="relative">
+                <select
+                  id="perPage"
+                  v-model="filters.per_page"
+                  @change="loadObras"
+                  class="w-full rounded-lg border shadow-sm transition-all duration-200 h-11 bg-white pl-4 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 focus:outline-none"
+                >
+                  <option v-for="option in [1, 5, 10, 50, 100]" :key="option" :value="option">
+                    {{ option }}
+                  </option>
+                </select>
+              </div>
             </div>
           </div>
-          <div class="flex space-x-2">
-            <AppButton @click="loadObras">Filtrar</AppButton>
-            <AppButton @click="resetFilters">Limpar</AppButton>
+          <div class="flex space-x-3">
+            <button 
+              @click="loadObras" 
+              class="rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 relative overflow-hidden text-base px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500 hover:shadow-md hover:-translate-y-0.5"
+            >
+              <span class="relative z-10 flex items-center">Filtrar</span>
+            </button>
+            <button 
+              @click="resetFilters" 
+              class="rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 relative overflow-hidden text-base px-4 py-2.5 bg-transparent border border-blue-600 text-blue-600 hover:bg-blue-50 focus:ring-blue-300"
+            >
+              <span class="relative z-10 flex items-center">Limpar</span>
+            </button>
             <router-link to="/obras/criar">
-              <AppButton variant="success">Nova Obra</AppButton>
+              <button 
+                class="rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 relative overflow-hidden text-base px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white focus:ring-green-500 hover:shadow-md hover:-translate-y-0.5"
+              >
+                <span class="relative z-10 flex items-center">Nova Obra</span>
+              </button>
             </router-link>
           </div>
         </div>
@@ -53,88 +73,90 @@
 
       <!-- Tabela de Obras -->
       <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
+        <table class="min-w-full border-collapse border-spacing-0 w-full">
+          <thead>
             <tr>
               <th 
                 scope="col" 
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                class="bg-gray-50 text-left text-sm font-medium text-gray-600 uppercase px-4 py-3 cursor-pointer transition-colors duration-150"
                 @click="sortBy('nome')"
               >
                 Nome
-                <span v-if="filters.sort_by === 'nome'">
+                <span v-if="filters.sort_by === 'nome'" class="ml-1">
                   {{ filters.sort_direction === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" class="bg-gray-50 text-left text-sm font-medium text-gray-600 uppercase px-4 py-3">
                 Endereço
               </th>
               <th 
                 scope="col" 
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                class="bg-gray-50 text-left text-sm font-medium text-gray-600 uppercase px-4 py-3 cursor-pointer transition-colors duration-150"
                 @click="sortBy('data_inicio')"
               >
                 Data Início
-                <span v-if="filters.sort_by === 'data_inicio'">
+                <span v-if="filters.sort_by === 'data_inicio'" class="ml-1">
                   {{ filters.sort_direction === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
               <th 
                 scope="col" 
-                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                class="bg-gray-50 text-left text-sm font-medium text-gray-600 uppercase px-4 py-3 cursor-pointer transition-colors duration-150"
                 @click="sortBy('valor_estimado')"
               >
                 Valor Estimado
-                <span v-if="filters.sort_by === 'valor_estimado'">
+                <span v-if="filters.sort_by === 'valor_estimado'" class="ml-1">
                   {{ filters.sort_direction === 'asc' ? '↑' : '↓' }}
                 </span>
               </th>
-              <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" class="bg-gray-50 text-right text-sm font-medium text-gray-600 uppercase px-4 py-3">
                 Ações
               </th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-if="loading" class="animate-pulse">
-              <td colspan="5" class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center justify-center">
-                  <p class="text-gray-500">Carregando...</p>
+          <tbody>
+            <tr v-if="loading">
+              <td colspan="5" class="px-4 py-6 text-center">
+                <div class="flex flex-col items-center justify-center space-y-3">
+                  <div class="skeleton h-6 w-32 rounded"></div>
                 </div>
               </td>
             </tr>
             <tr v-else-if="obras.length === 0">
-              <td colspan="5" class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center justify-center">
+              <td colspan="5" class="px-4 py-6 text-center">
+                <div class="flex flex-col items-center justify-center">
                   <p class="text-gray-500">Nenhuma obra encontrada</p>
                 </div>
               </td>
             </tr>
-            <tr v-for="obra in obras" :key="obra.id" class="hover:bg-gray-50">
-              <td class="px-6 py-4 whitespace-nowrap">
+            <tr v-for="obra in obras" :key="obra.id" class="transition-colors duration-150 hover:bg-gray-50 border-b border-gray-100">
+              <td class="px-4 py-4">
                 <div class="text-sm font-medium text-gray-900">{{ obra.nome }}</div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-500">{{ obra.endereco }}</div>
+              <td class="px-4 py-4">
+                <div class="text-sm text-gray-600">{{ obra.endereco }}</div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-500">{{ formatDate(obra.data_inicio) }}</div>
+              <td class="px-4 py-4">
+                <div class="text-sm text-gray-600">{{ formatDate(obra.data_inicio) }}</div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-500">{{ formatCurrency(obra.valor_estimado) }}</div>
+              <td class="px-4 py-4">
+                <div class="text-sm text-gray-600">{{ formatCurrency(obra.valor_estimado) }}</div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                <router-link :to="`/obras/${obra.id}`" class="text-indigo-600 hover:text-indigo-900">
-                  Visualizar
-                </router-link>
-                <router-link :to="`/obras/${obra.id}/editar`" class="text-blue-600 hover:text-blue-900">
-                  Editar
-                </router-link>
-                <button 
-                  @click="confirmDelete(obra)" 
-                  class="text-red-600 hover:text-red-900"
-                >
-                  Excluir
-                </button>
+              <td class="px-4 py-4 text-right">
+                <div class="flex items-center justify-end space-x-3">
+                  <router-link :to="`/obras/${obra.id}`" class="text-blue-600 hover:text-blue-800 transition-colors duration-150 font-medium">
+                    Visualizar
+                  </router-link>
+                  <router-link :to="`/obras/${obra.id}/editar`" class="text-purple-600 hover:text-purple-800 transition-colors duration-150 font-medium">
+                    Editar
+                  </router-link>
+                  <button 
+                    @click="confirmDelete(obra)" 
+                    class="text-red-600 hover:text-red-800 transition-colors duration-150 font-medium"
+                  >
+                    Excluir
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -142,12 +164,12 @@
       </div>
 
       <!-- Paginação -->
-      <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+      <div class="bg-white px-6 py-4 flex items-center justify-between border-t border-gray-200">
         <div class="flex-1 flex justify-between sm:hidden">
           <button
             @click="goToPage(pagination.current_page - 1)"
             :disabled="pagination.current_page === 1"
-            class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-150"
             :class="{ 'opacity-50 cursor-not-allowed': pagination.current_page === 1 }"
           >
             Anterior
@@ -155,7 +177,7 @@
           <button
             @click="goToPage(pagination.current_page + 1)"
             :disabled="pagination.current_page === pagination.last_page"
-            class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-150"
             :class="{ 'opacity-50 cursor-not-allowed': pagination.current_page === pagination.last_page }"
           >
             Próxima
@@ -174,11 +196,11 @@
             </p>
           </div>
           <div>
-            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+            <nav class="relative z-0 inline-flex space-x-1" aria-label="Pagination">
               <button
                 @click="goToPage(pagination.current_page - 1)"
                 :disabled="pagination.current_page === 1"
-                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                class="relative inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors duration-150"
                 :class="{ 'opacity-50 cursor-not-allowed': pagination.current_page === 1 }"
               >
                 <span class="sr-only">Anterior</span>
@@ -188,15 +210,17 @@
                 v-for="page in paginationRange"
                 :key="page"
                 @click="goToPage(page)"
-                class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium"
-                :class="page === pagination.current_page ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600' : 'text-gray-500 hover:bg-gray-50'"
+                class="min-w-36 h-36 border-radius-50% relative inline-flex items-center justify-center min-w-9 h-9 rounded-full border transition-colors duration-150"
+                :class="page === pagination.current_page 
+                  ? 'bg-blue-600 border-blue-600 text-white' 
+                  : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'"
               >
                 {{ page }}
               </button>
               <button
                 @click="goToPage(pagination.current_page + 1)"
                 :disabled="pagination.current_page === pagination.last_page"
-                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                class="relative inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors duration-150"
                 :class="{ 'opacity-50 cursor-not-allowed': pagination.current_page === pagination.last_page }"
               >
                 <span class="sr-only">Próxima</span>
@@ -211,10 +235,10 @@
     <!-- Modal de Confirmação de Exclusão -->
     <div v-if="showDeleteModal" class="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
       <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="showDeleteModal = false"></div>
+        <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-[4px] transition-opacity" aria-hidden="true" @click="showDeleteModal = false"></div>
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+        <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <div class="bg-white px-8 pt-8 pb-6">
             <div class="sm:flex sm:items-start">
               <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
                 <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -233,20 +257,20 @@
               </div>
             </div>
           </div>
-          <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <div class="bg-gray-50 px-8 py-4 sm:flex sm:flex-row-reverse">
             <button 
               type="button" 
-              class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+              class="rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 relative overflow-hidden text-base px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white focus:ring-red-500 hover:shadow-md hover:-translate-y-0.5 w-full sm:w-auto"
               @click="deleteObra"
             >
-              Excluir
+              <span class="relative z-10 flex items-center">Excluir</span>
             </button>
             <button 
               type="button" 
-              class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+              class="mt-3 sm:mt-0 sm:mr-3 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 relative overflow-hidden text-base px-4 py-2.5 bg-transparent border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-300 w-full sm:w-auto"
               @click="showDeleteModal = false"
             >
-              Cancelar
+              <span class="relative z-10 flex items-center">Cancelar</span>
             </button>
           </div>
         </div>
@@ -259,8 +283,8 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import AppLayout from '../../components/AppLayout.vue';
-import AppButton from '../../components/AppButton.vue';
 import obraService, { Obra, ObraFilters, PaginatedResponse } from '../../services/obraService';
+import toastService from '../../services/toastService';
 
 const router = useRouter();
 const obras = ref<Obra[]>([]);
@@ -321,6 +345,8 @@ const loadObras = async () => {
     pagination.total = response.meta.total;
   } catch (error) {
     console.error('Erro ao carregar obras:', error);
+    toastService.showErrorToast(`Erro ao carregar obras: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    obras.value = [];
   } finally {
     loading.value = false;
   }
@@ -372,8 +398,10 @@ const deleteObra = async () => {
     await obraService.deleteObra(obraToDelete.value.id);
     showDeleteModal.value = false;
     loadObras();
+    toastService.showSuccessToast(`Obra "${obraToDelete.value.nome}" excluída com sucesso.`);
   } catch (error) {
     console.error('Erro ao excluir obra:', error);
+    toastService.showErrorToast(`Erro ao excluir obra: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
   }
 };
 
@@ -400,3 +428,20 @@ onMounted(() => {
   loadObras();
 });
 </script>
+
+<style scoped>
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+</style>

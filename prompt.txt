@@ -1,9 +1,25 @@
 leia o arquivo best_pratices_vuejs.txt
 leia o arquivo laravel_best_pratices.txt
+leia o arquivo design_best_pratices.txt
+leia o arquivo escopo.txt
 
 com base nestes arquivos, implemente a funcionalidade solicitada.
 
-leia o arquivo design.txt e faça o redesign do sistema baseado nele.
+crie o crud de categoria de gasto
+
+Categoria de Gasto
+
+    Exemplos: Mão de obra, Material, Alimentação
+
+    Atributos:
+
+        Nome
+
+        Descrição
+
+    Relacionamentos:
+
+        Muitas para muitas com Obras
 
 
 A cada solicitação, revise o código proposto com base nestas diretrizes.

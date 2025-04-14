@@ -1,0 +1,176 @@
+# Boas Práticas de Design para o Sistema de Controle de Obras
+
+Este documento estabelece as diretrizes e boas práticas de design que devem ser seguidas durante o desenvolvimento do Sistema de Controle de Obras, garantindo consistência visual, acessibilidade e uma experiência de usuário de alta qualidade.
+
+## 1. Sistema de Design
+
+### 1.1 Design Tokens
+- Utilize sempre os tokens de design definidos no arquivo `design-tokens.css` para cores, espaçamentos, tipografia, sombras e transições.
+- Nunca hardcode valores CSS que já estão definidos como tokens.
+- Exemplo: use `var(--color-primary)` em vez de `#3B82F6`.
+
+### 1.2 Tipografia
+- Use a fonte principal (Inter) para textos de conteúdo, formulários e elementos de interface.
+- Use a fonte secundária (Poppins) para títulos e cabeçalhos.
+- Mantenha a hierarquia tipográfica consistente:
+  - Títulos de página: 24px, peso 600
+  - Subtítulos: 18px, peso 500
+  - Texto de conteúdo: 14px, peso 400
+  - Texto secundário: 12px, peso 400
+
+### 1.3 Cores
+- Utilize a paleta de cores definida nos tokens de design:
+  - Primária: azul (#3B82F6) para ações principais, links e elementos de destaque.
+  - Secundária: cinza (#6B7280) para textos secundários e elementos menos importantes.
+  - Sucesso: verde (#10B981) para mensagens de sucesso e confirmação.
+  - Erro: vermelho (#EF4444) para mensagens de erro e alertas críticos.
+  - Aviso: amarelo (#F59E0B) para avisos e alertas não críticos.
+  - Info: azul claro (#60A5FA) para mensagens informativas.
+- Mantenha contraste adequado entre texto e fundo (mínimo 4.5:1 para texto normal).
+
+## 2. Componentes
+
+### 2.1 Botões
+- Use o componente `AppButton` para todos os botões da aplicação.
+- Siga a hierarquia visual de botões:
+  - Primário: fundo azul, texto branco, para ações principais.
+  - Secundário: borda cinza, texto cinza escuro, para ações secundárias.
+  - Terciário: sem borda, texto azul, para ações menos importantes.
+- Mantenha o tamanho e padding consistentes: padding horizontal de 16px e vertical de 10px.
+- Inclua sempre estados de hover, focus e disabled.
+- Adicione ícones apenas quando necessário para clareza.
+
+### 2.2 Formulários
+- Use os componentes `AppInput`, `AppTextarea` e `AppSelect` para todos os elementos de formulário.
+- Mantenha a altura consistente entre campos (44px para inputs e selects).
+- Sempre inclua labels claros e descritivos.
+- Marque campos obrigatórios com asterisco vermelho.
+- Exiba mensagens de erro abaixo do campo, em vermelho.
+- Mantenha o espaçamento vertical de 24px entre grupos de campos.
+
+### 2.3 Tabelas
+- Use bordas sutis e espaçamento adequado entre células.
+- Alterne cores de fundo para facilitar a leitura (zebra striping).
+- Alinhe texto à esquerda para conteúdo textual e à direita para valores numéricos.
+- Implemente cabeçalhos fixos para tabelas longas.
+- Adicione paginação para conjuntos de dados grandes.
+
+### 2.4 Cards
+- Use cantos arredondados (8px) e sombras sutis.
+- Mantenha padding interno consistente (16px).
+- Organize o conteúdo com espaçamento vertical adequado.
+- Use títulos claros e concisos.
+
+## 3. Layout e Espaçamento
+
+### 3.1 Grid System
+- Utilize o sistema de grid do Tailwind CSS para layouts responsivos.
+- Mantenha margens laterais consistentes em diferentes tamanhos de tela.
+- Use breakpoints padrão para responsividade:
+  - sm: 640px
+  - md: 768px
+  - lg: 1024px
+  - xl: 1280px
+  - 2xl: 1536px
+
+### 3.2 Espaçamento
+- Aplique espaçamento consistente usando as variáveis de espaçamento:
+  - Entre seções: 48px
+  - Entre componentes: 24px
+  - Entre elementos relacionados: 16px
+  - Padding interno de containers: 24px
+
+## 4. Microinterações e Feedback
+
+### 4.1 Estados de Interação
+- Implemente estados visuais claros para hover, focus, active e disabled.
+- Use transições suaves (200-300ms) para mudanças de estado.
+- Adicione efeitos sutis de hover em elementos interativos.
+
+### 4.2 Feedback ao Usuário
+- Use o sistema de toast para mensagens de feedback:
+  - Sucesso: operações concluídas com êxito.
+  - Erro: falhas e problemas que requerem atenção.
+  - Aviso: informações importantes que não são críticas.
+  - Info: informações contextuais e dicas.
+- Exiba indicadores de carregamento durante operações assíncronas.
+- Substitua textos de "Carregando..." por skeleton loaders quando apropriado.
+
+### 4.3 Animações
+- Use animações com propósito, nunca apenas por decoração.
+- Mantenha animações curtas (200-500ms) e sutis.
+- Considere preferências de usuário para movimento reduzido.
+
+## 5. Acessibilidade
+
+### 5.1 Contraste e Legibilidade
+- Mantenha contraste de texto adequado (WCAG AA no mínimo).
+- Use tamanhos de fonte legíveis (mínimo 14px para texto principal).
+- Evite texto em imagens.
+
+### 5.2 Navegação por Teclado
+- Garanta que todos os elementos interativos sejam acessíveis via teclado.
+- Implemente ordem de tabulação lógica.
+- Torne o foco do teclado visualmente óbvio.
+
+### 5.3 Semântica
+- Use elementos HTML semânticos apropriados.
+- Inclua atributos ARIA quando necessário.
+- Forneça textos alternativos para imagens.
+
+## 6. Responsividade
+
+### 6.1 Design Mobile-First
+- Desenvolva primeiro para dispositivos móveis e depois expanda para telas maiores.
+- Teste em múltiplos tamanhos de tela e dispositivos.
+- Adapte layouts para diferentes breakpoints.
+
+### 6.2 Elementos Responsivos
+- Ajuste tamanhos de fonte, espaçamento e layout para diferentes tamanhos de tela.
+- Considere diferentes métodos de entrada (touch vs. mouse).
+- Oculte ou reorganize elementos menos importantes em telas menores.
+
+## 7. Consistência
+
+### 7.1 Padrões Visuais
+- Mantenha padrões visuais consistentes em toda a aplicação.
+- Use os mesmos componentes para funções similares.
+- Aplique estilos consistentes para elementos similares.
+
+### 7.2 Linguagem e Terminologia
+- Use terminologia consistente em toda a interface.
+- Mantenha tom e voz consistentes em textos e mensagens.
+- Padronize rótulos de ações (ex: sempre "Salvar" em vez de alternar entre "Salvar" e "Confirmar").
+
+## 8. Performance Visual
+
+### 8.1 Otimização de Imagens
+- Otimize imagens para web (tamanho e formato apropriados).
+- Use formatos modernos como WebP quando possível.
+- Implemente carregamento lazy para imagens fora da viewport inicial.
+
+### 8.2 Renderização Eficiente
+- Minimize mudanças de layout durante o carregamento da página.
+- Evite animações complexas que possam causar jank visual.
+- Considere o uso de skeleton loaders para conteúdo que está carregando.
+
+## 9. Processo de Design
+
+### 9.1 Documentação
+- Mantenha este guia de design atualizado.
+- Documente decisões de design importantes.
+- Crie e mantenha uma biblioteca de componentes.
+
+### 9.2 Testes de Usabilidade
+- Realize testes de usabilidade regularmente.
+- Colete feedback dos usuários sobre a interface.
+- Itere no design com base no feedback.
+
+### 9.3 Colaboração
+- Mantenha comunicação próxima entre designers e desenvolvedores.
+- Revise implementações para garantir fidelidade ao design.
+- Discuta e resolva problemas de implementação em conjunto.
+
+---
+
+Seguindo estas diretrizes, garantiremos que o Sistema de Controle de Obras mantenha alta qualidade visual, boa usabilidade e consistência em toda a aplicação.

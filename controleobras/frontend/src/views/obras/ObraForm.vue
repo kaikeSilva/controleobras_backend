@@ -1,8 +1,8 @@
 <template>
   <AppLayout :title="isEditing ? 'Editar Obra' : 'Nova Obra'">
-    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-      <form @submit.prevent="saveObra" class="px-4 py-5 sm:p-6">
-        <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+    <div class="bg-white shadow-md overflow-hidden rounded-lg">
+      <form @submit.prevent="saveObra" class="px-6 py-6">
+        <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
           <!-- Nome da obra -->
           <div class="sm:col-span-3">
             <AppInput
@@ -46,24 +46,21 @@
           <!-- Prazo estimado -->
           <div class="sm:col-span-2">
             <AppInput
-              v-model.number="form.prazo_estimado"
+              v-model="form.prazo_estimado"
               type="number"
               label="Prazo Estimado (dias)"
               required
-              min="1"
               :error="errors.prazo_estimado"
             />
           </div>
 
-          <!-- Área em m² -->
+          <!-- Área m² -->
           <div class="sm:col-span-2">
             <AppInput
-              v-model.number="form.area_m2"
+              v-model="form.area_m2"
               type="number"
               label="Área (m²)"
               required
-              min="0"
-              step="0.01"
               :error="errors.area_m2"
             />
           </div>
@@ -71,12 +68,11 @@
           <!-- Valor estimado -->
           <div class="sm:col-span-3">
             <AppInput
-              v-model.number="form.valor_estimado"
+              v-model="form.valor_estimado"
               type="number"
+              step="0.01"
               label="Valor Estimado (R$)"
               required
-              min="0"
-              step="0.01"
               :error="errors.valor_estimado"
             />
           </div>
@@ -94,23 +90,52 @@
               :error="errors.taxa_administracao"
             />
           </div>
+
+          <!-- Status -->
+          <div class="sm:col-span-3">
+            <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
+              Status <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="status"
+              v-model="form.status"
+              class="w-full rounded-lg border shadow-sm transition-all duration-200 h-11 bg-white pl-4 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 focus:outline-none"
+              required
+            >
+              <option value="planejamento">Planejamento</option>
+              <option value="em_andamento">Em Andamento</option>
+              <option value="concluida">Concluída</option>
+              <option value="pausada">Pausada</option>
+              <option value="cancelada">Cancelada</option>
+            </select>
+            <p v-if="errors.status" class="mt-2 text-sm text-red-600">{{ errors.status }}</p>
+          </div>
         </div>
 
         <div class="mt-8 flex justify-end space-x-3">
-          <AppButton 
-            type="button" 
-            variant="secondary" 
-            @click="$router.push('/obras')"
-          >
-            Cancelar
-          </AppButton>
-          <AppButton 
+          <router-link to="/obras">
+            <button 
+              type="button" 
+              class="rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 relative overflow-hidden text-base px-4 py-2.5 bg-transparent border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-300"
+            >
+              <span class="relative z-10 flex items-center">Cancelar</span>
+            </button>
+          </router-link>
+          <button 
             type="submit" 
-            variant="primary"
+            class="rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 relative overflow-hidden text-base px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500 hover:shadow-md hover:-translate-y-0.5"
             :disabled="loading"
           >
-            {{ isEditing ? 'Atualizar' : 'Salvar' }}
-          </AppButton>
+            <span class="relative z-10 flex items-center">
+              <span v-if="loading" class="mr-2">
+                <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </span>
+              {{ isEditing ? 'Atualizar' : 'Salvar' }}
+            </span>
+          </button>
         </div>
       </form>
     </div>
@@ -123,8 +148,8 @@ import { useRouter, useRoute } from 'vue-router';
 import AppLayout from '../../components/AppLayout.vue';
 import AppInput from '../../components/AppInput.vue';
 import AppTextarea from '../../components/AppTextarea.vue';
-import AppButton from '../../components/AppButton.vue';
 import obraService, { Obra } from '../../services/obraService';
+import toastService from '../../services/toastService';
 
 const router = useRouter();
 const route = useRoute();
@@ -136,26 +161,36 @@ const isEditing = computed(() => !!route.params.id);
 // Formulário
 const form = reactive<Obra>({
   nome: '',
-  descricao: '',
   endereco: '',
+  descricao: '',
   data_inicio: '',
   prazo_estimado: 0,
   area_m2: 0,
   valor_estimado: 0,
   taxa_administracao: 0,
+  status: 'planejamento'
 });
 
 // Erros de validação
-const errors = reactive<Record<string, string>>({});
+const errors = reactive({
+  nome: '',
+  endereco: '',
+  descricao: '',
+  data_inicio: '',
+  prazo_estimado: '',
+  area_m2: '',
+  valor_estimado: '',
+  taxa_administracao: '',
+  status: ''
+});
 
 // Carregar dados da obra para edição
 const loadObra = async () => {
   if (!isEditing.value) return;
   
-  loading.value = true;
   try {
-    const id = Number(route.params.id);
-    const obra = await obraService.getObra(id);
+    loading.value = true;
+    const obra = await obraService.getObra(route.params.id as string);
     
     // Preencher formulário com dados da obra
     Object.assign(form, {
@@ -165,7 +200,7 @@ const loadObra = async () => {
     });
   } catch (error) {
     console.error('Erro ao carregar obra:', error);
-    router.push('/obras');
+    toastService.showErrorToast(`Erro ao carregar obra: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
   } finally {
     loading.value = false;
   }
@@ -173,66 +208,72 @@ const loadObra = async () => {
 
 // Validar formulário
 const validateForm = () => {
-  const newErrors: Record<string, string> = {};
+  let isValid = true;
   
-  if (!form.nome) {
-    newErrors.nome = 'O nome da obra é obrigatório';
+  // Resetar erros
+  Object.keys(errors).forEach(key => {
+    errors[key as keyof typeof errors] = '';
+  });
+  
+  // Validar campos obrigatórios
+  if (!form.nome.trim()) {
+    errors.nome = 'O nome da obra é obrigatório';
+    isValid = false;
   }
   
-  if (!form.endereco) {
-    newErrors.endereco = 'O endereço da obra é obrigatório';
+  if (!form.endereco.trim()) {
+    errors.endereco = 'O endereço é obrigatório';
+    isValid = false;
   }
   
   if (!form.data_inicio) {
-    newErrors.data_inicio = 'A data de início é obrigatória';
+    errors.data_inicio = 'A data de início é obrigatória';
+    isValid = false;
   }
   
-  if (!form.prazo_estimado || form.prazo_estimado <= 0) {
-    newErrors.prazo_estimado = 'O prazo estimado deve ser maior que zero';
+  if (form.prazo_estimado <= 0) {
+    errors.prazo_estimado = 'O prazo estimado deve ser maior que zero';
+    isValid = false;
   }
   
-  if (form.area_m2 < 0) {
-    newErrors.area_m2 = 'A área deve ser maior ou igual a zero';
+  if (form.area_m2 <= 0) {
+    errors.area_m2 = 'A área deve ser maior que zero';
+    isValid = false;
   }
   
-  if (form.valor_estimado < 0) {
-    newErrors.valor_estimado = 'O valor estimado deve ser maior ou igual a zero';
+  if (form.valor_estimado <= 0) {
+    errors.valor_estimado = 'O valor estimado deve ser maior que zero';
+    isValid = false;
   }
   
   if (form.taxa_administracao < 0 || form.taxa_administracao > 100) {
-    newErrors.taxa_administracao = 'A taxa de administração deve estar entre 0 e 100';
+    errors.taxa_administracao = 'A taxa de administração deve estar entre 0 e 100';
+    isValid = false;
   }
   
-  // Atualizar objeto de erros
-  Object.assign(errors, newErrors);
-  
-  return Object.keys(newErrors).length === 0;
+  return isValid;
 };
 
 // Salvar obra
 const saveObra = async () => {
   if (!validateForm()) return;
   
-  loading.value = true;
   try {
+    loading.value = true;
+    
     if (isEditing.value) {
-      const id = Number(route.params.id);
-      await obraService.updateObra(id, form);
+      await obraService.updateObra(route.params.id as string, form as Obra);
+      toastService.showSuccessToast('Obra atualizada com sucesso!');
     } else {
-      await obraService.createObra(form);
+      await obraService.createObra(form as Obra);
+      toastService.showSuccessToast('Obra criada com sucesso!');
     }
     
+    // Redirecionar para a lista de obras
     router.push('/obras');
-  } catch (error: any) {
+  } catch (error) {
     console.error('Erro ao salvar obra:', error);
-    
-    // Tratar erros de validação do backend
-    if (error.response?.data?.errors) {
-      const backendErrors = error.response.data.errors;
-      Object.keys(backendErrors).forEach(key => {
-        errors[key] = backendErrors[key][0];
-      });
-    }
+    toastService.showErrorToast(`Erro ao salvar obra: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
   } finally {
     loading.value = false;
   }
