@@ -4,4 +4,6 @@ leio o arquivo escopo.txt
 
 com base nestes arquivos, implemente a funcionalidade solicitada.
 
-reimplemente do zero a tela de ObrasList.vue considerando que deve haver um dropdown funcional para as acoes 
+implemente a tela de listagem de obras com uma tabela mostrando as obras no sistema.
+separe a analise de bugs da implementacao da solucao, implemente primeiro e depois procure por problemas
+foque apenas na implementacao solicitada
