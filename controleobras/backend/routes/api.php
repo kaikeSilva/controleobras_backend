@@ -31,3 +31,6 @@ Route::get('/hello', function () {
 
 // Rotas para o CRUD de obras
 Route::apiResource('obras', \App\Http\Controllers\ObraController::class);
+
+// Rotas para o CRUD de categorias de gasto
+Route::apiResource('categorias-gasto', \App\Http\Controllers\CategoriaGastoController::class);

@@ -2,7 +2,7 @@ import { ref, reactive } from 'vue';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
-interface ToastState {
+export interface ToastState {
   show: boolean;
   type: ToastType;
   title: string;
@@ -97,6 +97,18 @@ function getTitleByType(type: ToastType): string {
   }
 }
 
+// Hook para usar o toast em componentes Vue
+export function useToast() {
+  return {
+    toast: {
+      success: (message: string, title?: string, duration?: number) => showSuccessToast(message, title, duration),
+      error: (message: string, title?: string, duration?: number) => showErrorToast(message, title, duration),
+      warning: (message: string, title?: string, duration?: number) => showWarningToast(message, title, duration),
+      info: (message: string, title?: string, duration?: number) => showInfoToast(message, title, duration)
+    }
+  };
+}
+
 export default {
   toastState,
   showToast,
@@ -104,5 +116,6 @@ export default {
   showSuccessToast,
   showErrorToast,
   showWarningToast,
-  showInfoToast
+  showInfoToast,
+  useToast
 };

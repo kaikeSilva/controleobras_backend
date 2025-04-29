@@ -28,4 +28,16 @@ class ObraResource extends JsonResource
             'updated_at' => $this->updated_at,
         ];
     }
+
+    /**
+     * Customize the pagination information for the resource.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Http\Resources\Json\AnonymousResourceCollection  $resource
+     * @return array
+     */
+    public static function paginationInformation($request, $paginated, $default)
+    {
+        return $default;
+    }
 }

@@ -27,6 +27,23 @@ const routes: Array<RouteRecordRaw> = [
     name: 'obras-editar',
     component: () => import('../views/obras/ObraForm.vue'),
     props: true
+  },
+  // Rotas para categorias de gasto
+  {
+    path: '/categorias-gasto',
+    name: 'categoria-gasto-list',
+    component: () => import('../views/categorias-gasto/CategoriaGastoList.vue')
+  },
+  {
+    path: '/categorias-gasto/criar',
+    name: 'categoria-gasto-create',
+    component: () => import('../views/categorias-gasto/CategoriaGastoForm.vue')
+  },
+  {
+    path: '/categorias-gasto/:id/editar',
+    name: 'categoria-gasto-edit',
+    component: () => import('../views/categorias-gasto/CategoriaGastoForm.vue'),
+    props: true
   }
 ];
 

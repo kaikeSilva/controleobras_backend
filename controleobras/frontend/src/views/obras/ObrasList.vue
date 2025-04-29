@@ -31,21 +31,6 @@
                 />
               </div>
             </div>
-            <div class="w-full sm:w-1/2">
-              <label for="perPage" class="block text-sm font-medium text-gray-700 mb-2">Itens por Página</label>
-              <div class="relative">
-                <select
-                  id="perPage"
-                  v-model="filters.per_page"
-                  @change="loadObras"
-                  class="w-full rounded-lg border shadow-sm transition-all duration-200 h-11 bg-white pl-4 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 focus:outline-none"
-                >
-                  <option v-for="option in [1, 5, 10, 50, 100]" :key="option" :value="option">
-                    {{ option }}
-                  </option>
-                </select>
-              </div>
-            </div>
           </div>
           <div class="flex space-x-3">
             <button 
@@ -72,135 +57,206 @@
       </div>
 
       <!-- Tabela de Obras -->
-      <div class="overflow-x-auto">
-        <table class="min-w-full border-collapse border-spacing-0 w-full">
-          <thead>
-            <tr>
-              <th 
-                scope="col" 
-                class="bg-gray-50 text-left text-sm font-medium text-gray-600 uppercase px-4 py-3 cursor-pointer transition-colors duration-150"
-                @click="sortBy('nome')"
-              >
-                Nome
-                <span v-if="filters.sort_by === 'nome'" class="ml-1">
-                  {{ filters.sort_direction === 'asc' ? '↑' : '↓' }}
-                </span>
-              </th>
-              <th scope="col" class="bg-gray-50 text-left text-sm font-medium text-gray-600 uppercase px-4 py-3">
-                Endereço
-              </th>
-              <th 
-                scope="col" 
-                class="bg-gray-50 text-left text-sm font-medium text-gray-600 uppercase px-4 py-3 cursor-pointer transition-colors duration-150"
-                @click="sortBy('data_inicio')"
-              >
-                Data Início
-                <span v-if="filters.sort_by === 'data_inicio'" class="ml-1">
-                  {{ filters.sort_direction === 'asc' ? '↑' : '↓' }}
-                </span>
-              </th>
-              <th 
-                scope="col" 
-                class="bg-gray-50 text-left text-sm font-medium text-gray-600 uppercase px-4 py-3 cursor-pointer transition-colors duration-150"
-                @click="sortBy('valor_estimado')"
-              >
-                Valor Estimado
-                <span v-if="filters.sort_by === 'valor_estimado'" class="ml-1">
-                  {{ filters.sort_direction === 'asc' ? '↑' : '↓' }}
-                </span>
-              </th>
-              <th scope="col" class="bg-gray-50 text-right text-sm font-medium text-gray-600 uppercase px-4 py-3">
-                Ações
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="loading">
-              <td colspan="5" class="px-4 py-6 text-center">
-                <div class="flex flex-col items-center justify-center space-y-3">
-                  <div class="skeleton h-6 w-32 rounded"></div>
-                </div>
-              </td>
-            </tr>
-            <tr v-else-if="obras.length === 0">
-              <td colspan="5" class="px-4 py-6 text-center">
-                <div class="flex flex-col items-center justify-center">
-                  <p class="text-gray-500">Nenhuma obra encontrada</p>
-                </div>
-              </td>
-            </tr>
-            <tr v-for="obra in obras" :key="obra.id" class="transition-colors duration-150 hover:bg-gray-50 border-b border-gray-100">
-              <td class="px-4 py-4">
-                <div class="text-sm font-medium text-gray-900">{{ obra.nome }}</div>
-              </td>
-              <td class="px-4 py-4">
-                <div class="text-sm text-gray-600">{{ obra.endereco }}</div>
-              </td>
-              <td class="px-4 py-4">
-                <div class="text-sm text-gray-600">{{ formatDate(obra.data_inicio) }}</div>
-              </td>
-              <td class="px-4 py-4">
-                <div class="text-sm text-gray-600">{{ formatCurrency(obra.valor_estimado) }}</div>
-              </td>
-              <td class="px-4 py-4 text-right">
-                <div class="flex items-center justify-end space-x-3">
-                  <router-link :to="`/obras/${obra.id}`" class="text-blue-600 hover:text-blue-800 transition-colors duration-150 font-medium">
-                    Visualizar
-                  </router-link>
-                  <router-link :to="`/obras/${obra.id}/editar`" class="text-purple-600 hover:text-purple-800 transition-colors duration-150 font-medium">
-                    Editar
-                  </router-link>
-                  <button 
-                    @click="confirmDelete(obra)" 
-                    class="text-red-600 hover:text-red-800 transition-colors duration-150 font-medium"
-                  >
-                    Excluir
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Paginação -->
-      <div class="bg-white px-6 py-4 flex items-center justify-between border-t border-gray-200">
-        <div class="flex-1 flex justify-between sm:hidden">
-          <button
-            @click="goToPage(pagination.current_page - 1)"
-            :disabled="pagination.current_page === 1"
-            class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-150"
-            :class="{ 'opacity-50 cursor-not-allowed': pagination.current_page === 1 }"
-          >
-            Anterior
-          </button>
-          <button
-            @click="goToPage(pagination.current_page + 1)"
-            :disabled="pagination.current_page === pagination.last_page"
-            class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-150"
-            :class="{ 'opacity-50 cursor-not-allowed': pagination.current_page === pagination.last_page }"
-          >
-            Próxima
-          </button>
+      <div class="relative">
+        <div class="overflow-x-auto">
+          <table class="min-w-full border-collapse border-spacing-0 w-full">
+            <thead>
+              <tr>
+                <th 
+                  scope="col" 
+                  class="bg-gray-50 text-left text-sm font-medium text-gray-600 uppercase px-4 py-3 cursor-pointer transition-colors duration-150"
+                  @click="sortBy('nome')"
+                >
+                  Nome
+                  <span v-if="filters.sort_by === 'nome'" class="ml-1">
+                    {{ filters.sort_direction === 'asc' ? '↑' : '↓' }}
+                  </span>
+                </th>
+                <th scope="col" class="bg-gray-50 text-left text-sm font-medium text-gray-600 uppercase px-4 py-3">
+                  Endereço
+                </th>
+                <th 
+                  scope="col" 
+                  class="bg-gray-50 text-left text-sm font-medium text-gray-600 uppercase px-4 py-3 cursor-pointer transition-colors duration-150"
+                  @click="sortBy('data_inicio')"
+                >
+                  Data Início
+                  <span v-if="filters.sort_by === 'data_inicio'" class="ml-1">
+                    {{ filters.sort_direction === 'asc' ? '↑' : '↓' }}
+                  </span>
+                </th>
+                <th 
+                  scope="col" 
+                  class="bg-gray-50 text-left text-sm font-medium text-gray-600 uppercase px-4 py-3 cursor-pointer transition-colors duration-150"
+                  @click="sortBy('valor_estimado')"
+                >
+                  Valor Estimado
+                  <span v-if="filters.sort_by === 'valor_estimado'" class="ml-1">
+                    {{ filters.sort_direction === 'asc' ? '↑' : '↓' }}
+                  </span>
+                </th>
+                <th scope="col" class="bg-gray-50 text-right text-sm font-medium text-gray-600 uppercase px-4 py-3">
+                  Ações
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="loading">
+                <td colspan="5" class="px-4 py-6 text-center">
+                  <div class="flex flex-col items-center justify-center space-y-3">
+                    <div class="skeleton h-6 w-32 rounded"></div>
+                  </div>
+                </td>
+              </tr>
+              <tr v-else-if="obras.length === 0">
+                <td colspan="5" class="px-4 py-6 text-center">
+                  <div class="flex flex-col items-center justify-center">
+                    <p class="text-gray-500">Nenhuma obra encontrada</p>
+                  </div>
+                </td>
+              </tr>
+              <tr v-for="obra in obras" :key="obra.id" class="transition-colors duration-150 hover:bg-gray-50 border-b border-gray-100">
+                <td class="px-4 py-4">
+                  <div class="text-sm font-medium text-gray-900">{{ obra.nome }}</div>
+                </td>
+                <td class="px-4 py-4">
+                  <div class="text-sm text-gray-600">{{ obra.endereco }}</div>
+                </td>
+                <td class="px-4 py-4">
+                  <div class="text-sm text-gray-600">{{ formatDate(obra.data_inicio) }}</div>
+                </td>
+                <td class="px-4 py-4">
+                  <div class="text-sm text-gray-600">{{ formatCurrency(obra.valor_estimado) }}</div>
+                </td>
+                <td class="px-4 py-4 text-right">
+                  <div class="relative inline-block text-left action-menu-container">
+                    <button 
+                      @click.stop="toggleActionMenu(obra.id, $event)" 
+                      class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
+                    >
+                      Ações
+                      <svg class="ml-2 -mr-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-          <div>
-            <p class="text-sm text-gray-700">
-              Mostrando
-              <span class="font-medium">{{ pagination.from || 0 }}</span>
-              a
-              <span class="font-medium">{{ pagination.to || 0 }}</span>
-              de
-              <span class="font-medium">{{ pagination.total }}</span>
-              resultados
-            </p>
+        
+        <!-- Dropdowns (positioned outside the scrollable area) -->
+        <div id="dropdown-container" class="dropdown-container">
+          <div v-for="obra in obras" :key="`dropdown-${obra.id}`">
+            <div 
+              v-if="activeActionMenu === obra.id" 
+              :id="`dropdown-${obra.id}`"
+              class="fixed z-50 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dropdown-menu"
+              @click.stop
+            >
+              <div class="py-1">
+                <router-link 
+                  :to="`/obras/${obra.id}`" 
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200"
+                >
+                  <div class="flex items-center">
+                    <svg class="mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                      <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                    </svg>
+                    Visualizar
+                  </div>
+                </router-link>
+                
+                <router-link 
+                  :to="`/obras/${obra.id}/editar`" 
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200"
+                >
+                  <div class="flex items-center">
+                    <svg class="mr-3 h-5 w-5 text-purple-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                    </svg>
+                    Editar
+                  </div>
+                </router-link>
+                
+                <button 
+                  @click="confirmDelete(obra)" 
+                  class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200"
+                >
+                  <div class="flex items-center">
+                    <svg class="mr-3 h-5 w-5 text-red-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    Excluir
+                  </div>
+                </button>
+              </div>
+            </div>
           </div>
-          <div>
-            <nav class="relative z-0 inline-flex space-x-1" aria-label="Pagination">
+        </div>
+      </div>
+      
+      <!-- Paginação -->
+      <div class="bg-white px-6 py-6 border-t border-gray-200">
+        <div class="flex flex-col space-y-4">
+          <!-- Informação de paginação -->
+          <div class="text-sm text-gray-700 text-center sm:text-left">
+            Mostrando
+            <span class="font-medium">{{ pagination.from || 0 }}</span>
+            a
+            <span class="font-medium">{{ pagination.to || 0 }}</span>
+            de
+            <span class="font-medium">{{ pagination.total }}</span>
+            resultados
+          </div>
+          
+          <!-- Controles de paginação -->
+          <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+            <!-- Seletor de itens por página -->
+            <div class="w-full sm:w-48">
+              <label for="perPage" class="block text-sm font-medium text-gray-700 mb-2">Itens por Página</label>
+              <div class="relative">
+                <select
+                  id="perPage"
+                  v-model="filters.per_page"
+                  @change="handlePerPageChange"
+                  class="w-full rounded-lg border shadow-sm transition-all duration-200 h-11 bg-white pl-4 border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 focus:outline-none"
+                >
+                  <option v-for="option in [1, 5, 10, 50, 100]" :key="option" :value="option">
+                    {{ option }}
+                  </option>
+                </select>
+              </div>
+            </div>
+            
+            <!-- Versão mobile dos controles de paginação - visível apenas em telas pequenas -->
+            <div class="flex space-x-2 sm:hidden">
               <button
                 @click="goToPage(pagination.current_page - 1)"
                 :disabled="pagination.current_page === 1"
-                class="relative inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors duration-150"
+                class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
+                :class="{ 'opacity-50 cursor-not-allowed': pagination.current_page === 1 }"
+              >
+                Anterior
+              </button>
+              <button
+                @click="goToPage(pagination.current_page + 1)"
+                :disabled="pagination.current_page === pagination.last_page"
+                class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
+                :class="{ 'opacity-50 cursor-not-allowed': pagination.current_page === pagination.last_page }"
+              >
+                Próxima
+              </button>
+            </div>
+            
+            <!-- Versão desktop dos controles de paginação - visível apenas em telas médias e grandes -->
+            <div class="hidden sm:flex items-center space-x-1">
+              <button
+                @click="goToPage(pagination.current_page - 1)"
+                :disabled="pagination.current_page === 1"
+                class="relative inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors duration-200"
                 :class="{ 'opacity-50 cursor-not-allowed': pagination.current_page === 1 }"
               >
                 <span class="sr-only">Anterior</span>
@@ -210,7 +266,7 @@
                 v-for="page in paginationRange"
                 :key="page"
                 @click="goToPage(page)"
-                class="min-w-36 h-36 border-radius-50% relative inline-flex items-center justify-center min-w-9 h-9 rounded-full border transition-colors duration-150"
+                class="relative inline-flex items-center justify-center min-w-9 h-9 rounded-full border transition-colors duration-200 px-3"
                 :class="page === pagination.current_page 
                   ? 'bg-blue-600 border-blue-600 text-white' 
                   : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'"
@@ -220,13 +276,13 @@
               <button
                 @click="goToPage(pagination.current_page + 1)"
                 :disabled="pagination.current_page === pagination.last_page"
-                class="relative inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors duration-150"
+                class="relative inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors duration-200"
                 :class="{ 'opacity-50 cursor-not-allowed': pagination.current_page === pagination.last_page }"
               >
                 <span class="sr-only">Próxima</span>
                 &raquo;
               </button>
-            </nav>
+            </div>
           </div>
         </div>
       </div>
@@ -280,7 +336,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import AppLayout from '../../components/AppLayout.vue';
 import obraService, { Obra, ObraFilters, PaginatedResponse } from '../../services/obraService';
@@ -291,6 +347,7 @@ const obras = ref<Obra[]>([]);
 const loading = ref(false);
 const showDeleteModal = ref(false);
 const obraToDelete = ref<Obra | null>(null);
+const activeActionMenu = ref<number | null>(null);
 
 const pagination = reactive({
   current_page: 1,
@@ -333,6 +390,10 @@ const paginationRange = computed(() => {
 const loadObras = async () => {
   loading.value = true;
   try {
+    // Garantir que a página seja um número
+    filters.page = Number(filters.page) || 1;
+    filters.per_page = Number(filters.per_page) || 10;
+    
     const response = await obraService.getObras(filters);
     obras.value = response.data;
     
@@ -423,9 +484,63 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
-// Carregar obras ao montar o componente
+// Handle per page change
+const handlePerPageChange = () => {
+  filters.page = 1;
+  loadObras();
+};
+
+// Toggle action menu
+const toggleActionMenu = (obraId: number, event?: MouseEvent) => {
+  if (activeActionMenu.value === obraId) {
+    activeActionMenu.value = null;
+  } else {
+    activeActionMenu.value = obraId;
+    
+    // Wait for the DOM to update with the new dropdown
+    setTimeout(() => {
+      // Find the button that was clicked
+      const button = event?.target as HTMLElement;
+      const buttonContainer = button?.closest('.action-menu-container');
+      const buttonRect = buttonContainer?.getBoundingClientRect();
+      
+      // Find the dropdown element
+      const dropdown = document.getElementById(`dropdown-${obraId}`) as HTMLElement;
+      
+      if (dropdown && buttonRect) {
+        // Position the dropdown relative to the button
+        dropdown.style.top = `${buttonRect.bottom + window.scrollY}px`;
+        dropdown.style.left = `${buttonRect.right - dropdown.offsetWidth + window.scrollX}px`;
+        
+        // Check if dropdown would extend beyond viewport
+        const dropdownRect = dropdown.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        
+        if (dropdownRect.bottom > viewportHeight - 20) { // 20px buffer
+          // Position above the button if it would go off-screen
+          dropdown.style.top = `${buttonRect.top - dropdown.offsetHeight + window.scrollY}px`;
+        }
+      }
+    }, 0);
+  }
+};
+
+// Close action menu when clicking outside
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as HTMLElement;
+  if (!target.closest('.action-menu-container') && activeActionMenu.value !== null) {
+    activeActionMenu.value = null;
+  }
+};
+
+// Add event listeners and load initial data
 onMounted(() => {
   loadObras();
+  document.addEventListener('click', handleClickOutside);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside);
 });
 </script>
 

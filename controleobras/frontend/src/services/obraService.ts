@@ -44,23 +44,30 @@ export interface PaginatedResponse<T> {
 
 const obraService = {
   getObras: (filters: ObraFilters = {}): Promise<PaginatedResponse<Obra>> => {
-    return api.get('/obras', { params: filters })
-      .then(response => response.data);
+    // Garantir que os parâmetros de paginação sejam números
+    const params = {
+      ...filters,
+      page: Number(filters.page) || 1,
+      per_page: Number(filters.per_page) || 10
+    };
+    
+    return api.get('/obras', { params })
+      .then((response: any) => response.data);
   },
 
   getObra: (id: number): Promise<Obra> => {
     return api.get(`/obras/${id}`)
-      .then(response => response.data.data);
+      .then((response: any) => response.data.data);
   },
 
   createObra: (obra: Obra): Promise<Obra> => {
     return api.post('/obras', obra)
-      .then(response => response.data.data);
+      .then((response: any) => response.data.data);
   },
 
   updateObra: (id: number, obra: Obra): Promise<Obra> => {
     return api.put(`/obras/${id}`, obra)
-      .then(response => response.data.data);
+      .then((response: any) => response.data.data);
   },
 
   deleteObra: (id: number): Promise<void> => {

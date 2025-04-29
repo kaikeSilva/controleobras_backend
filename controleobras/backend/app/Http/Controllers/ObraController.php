@@ -24,7 +24,7 @@ class ObraController extends Controller
         // Aplicar filtros dinâmicos com case-insensitive
         $filters = ['nome', 'endereco', 'data_inicio', 'prazo_estimado'];
         foreach ($filters as $filter) {
-            if ($request->has($filter)) {
+            if ($request->has($filter) && $request->get($filter) !== null && $request->get($filter) !== '') {
                 $query->whereRaw('LOWER(' . $filter . ') LIKE ?', ['%' . strtolower($request->get($filter)) . '%']);
             }
         }
@@ -43,8 +43,9 @@ class ObraController extends Controller
         // Paginação
         $perPage = (int) $request->get('per_page', 10);
         $perPage = max(1, min($perPage, 100)); // Limitar entre 1 e 100
+        $page = (int) $request->get('page', 1);
 
-        return ObraResource::collection($query->paginate($perPage));
+        return ObraResource::collection($query->paginate($perPage, ['*'], 'page', $page));
     }
 
     /**

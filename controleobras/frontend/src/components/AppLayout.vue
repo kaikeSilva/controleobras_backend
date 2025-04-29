@@ -22,6 +22,13 @@
               >
                 Obras
               </router-link>
+              <router-link 
+                to="/categorias-gasto" 
+                class="border-transparent text-gray-600 hover:border-blue-300 hover:text-blue-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200"
+                active-class="border-blue-500 text-gray-900"
+              >
+                Categorias de Gasto
+              </router-link>
             </div>
           </div>
         </div>
