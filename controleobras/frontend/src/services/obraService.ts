@@ -33,6 +33,11 @@ export interface ObraFilters {
   per_page?: number;
 }
 
+export interface ObraTotals {
+  valor_estimado_total: number;
+  lucro_estimado_total: number;
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   meta: {
@@ -62,6 +67,11 @@ const obraService = {
     };
     
     return api.get('/obras', { params })
+      .then((response: any) => response.data);
+  },
+
+  getTotals: (filters: ObraFilters = {}): Promise<ObraTotals> => {
+    return api.get('/obras/totals', { params: filters })
       .then((response: any) => response.data);
   },
 

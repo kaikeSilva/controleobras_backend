@@ -148,6 +148,29 @@
           </AppButton>
         </router-link>
       </div>
+      <!-- Resumo de valores totais -->
+      <div v-if="totals" class="p-4 bg-blue-50 border-b border-gray-200">
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+            </svg>
+            <div>
+              <p class="text-sm text-gray-600">Valor Estimado Total:</p>
+              <p class="text-lg font-semibold text-blue-700">{{ formatCurrency(totals.valor_estimado_total) }}</p>
+            </div>
+          </div>
+          <div class="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
+            </svg>
+            <div>
+              <p class="text-sm text-gray-600">Lucro Estimado Total:</p>
+              <p class="text-lg font-semibold text-green-700">{{ formatCurrency(totals.lucro_estimado_total) }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Loading -->
       <div v-if="loading" class="p-6 flex justify-center">
@@ -410,6 +433,12 @@ const pagination = ref({
   per_page: 10
 });
 
+const totals = ref({
+  valor_estimado_total: 0,
+  lucro_estimado_total: 0
+});
+
+
 // Filtros e ordenação
 const filters = reactive({
   nome: '',
@@ -471,6 +500,10 @@ const fetchObras = async () => {
       last_page: response.meta.last_page,
       per_page: response.meta.per_page
     };
+    
+    // Carregar os totais com os mesmos filtros
+    const totalsResponse = await obraService.getTotals(filters);
+    totals.value = totalsResponse;
   } catch (error) {
     toast.error('Erro ao carregar obras');
   } finally {

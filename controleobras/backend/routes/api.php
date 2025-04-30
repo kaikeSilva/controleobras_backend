@@ -29,8 +29,13 @@ Route::get('/hello', function () {
     ];
 });
 
-// Rotas para o CRUD de obras
-Route::apiResource('obras', \App\Http\Controllers\ObraController::class);
+// Rotas para Obras
+Route::get('/obras', 'App\Http\Controllers\ObraController@index');
+Route::get('/obras/totals', 'App\Http\Controllers\ObraController@getTotals');
+Route::get('/obras/{id}', 'App\Http\Controllers\ObraController@show');
+Route::post('/obras', 'App\Http\Controllers\ObraController@store');
+Route::put('/obras/{id}', 'App\Http\Controllers\ObraController@update');
+Route::delete('/obras/{id}', 'App\Http\Controllers\ObraController@destroy');
 
 // Rotas para o CRUD de categorias de gasto
 Route::apiResource('categorias-gasto', \App\Http\Controllers\CategoriaGastoController::class);

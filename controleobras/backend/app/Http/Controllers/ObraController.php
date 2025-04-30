@@ -20,15 +20,56 @@ class ObraController extends Controller
     public function index(Request $request)
     {
         $query = Obra::query();
-
-        // Aplicar filtros dinâmicos com case-insensitive
-        $filters = ['nome', 'endereco'];
-        foreach ($filters as $filter) {
-            if ($request->has($filter) && $request->get($filter) !== null && $request->get($filter) !== '') {
-                $query->whereRaw('LOWER(' . $filter . ') LIKE ?', ['%' . strtolower($request->get($filter)) . '%']);
-            }
+        
+        // Aplicar filtros
+        $this->applyFilters($query, $request);
+        
+        // Ordenação
+        $allowedSortFields = ['nome', 'endereco', 'data_inicio', 'prazo_estimado', 'area_m2', 'valor_estimado', 'taxa_administracao', 'created_at'];
+        $sortBy = in_array($request->sort_by, $allowedSortFields) ? $request->sort_by : 'created_at';
+        $sortDirection = $request->sort_direction === 'desc' ? 'desc' : 'asc';
+        
+        $query->orderBy($sortBy, $sortDirection);
+        
+        // Paginação
+        $perPage = $request->per_page ?? 10;
+        
+        return ObraResource::collection($query->paginate($perPage));
+    }
+    
+    /**
+     * Retorna os acumuladores de valor estimado e lucro estimado para todas as obras com os filtros aplicados
+     */
+    public function getTotals(Request $request)
+    {
+        $query = Obra::query();
+        
+        // Aplicar os mesmos filtros usados na listagem
+        $this->applyFilters($query, $request);
+        
+        // Calcular os totais
+        $totals = [
+            'valor_estimado_total' => $query->sum('valor_estimado'),
+            'lucro_estimado_total' => $query->sum(\DB::raw('valor_estimado * (taxa_administracao / 100)'))
+        ];
+        
+        return response()->json($totals);
+    }
+    
+    /**
+     * Aplica os filtros à query
+     */
+    private function applyFilters($query, $request)
+    {
+        // Filtros
+        if ($request->filled('nome')) {
+            $query->where('nome', 'like', '%' . $request->nome . '%');
         }
-
+        
+        if ($request->filled('endereco')) {
+            $query->where('endereco', 'like', '%' . $request->endereco . '%');
+        }
+        
         // Filtro de data de início com intervalo
         if ($request->filled('data_inicio_min')) {
             $query->where('data_inicio', '>=', $request->data_inicio_min);
@@ -37,40 +78,42 @@ class ObraController extends Controller
         if ($request->filled('data_inicio_max')) {
             $query->where('data_inicio', '<=', $request->data_inicio_max);
         }
-
-        // Filtros para campos numéricos com ranges (min/max)
-        $numericFilters = ['prazo_estimado', 'valor_estimado', 'taxa_administracao', 'area_m2'];
-        foreach ($numericFilters as $filter) {
-            // Filtro para valor mínimo
-            $minFilter = $filter . '_min';
-            if ($request->has($minFilter) && $request->get($minFilter) !== null && $request->get($minFilter) !== '') {
-                $query->where($filter, '>=', $request->get($minFilter));
-            }
-            
-            // Filtro para valor máximo
-            $maxFilter = $filter . '_max';
-            if ($request->has($maxFilter) && $request->get($maxFilter) !== null && $request->get($maxFilter) !== '') {
-                $query->where($filter, '<=', $request->get($maxFilter));
-            }
+        
+        // Filtros de prazo estimado
+        if ($request->filled('prazo_estimado_min')) {
+            $query->where('prazo_estimado', '>=', $request->prazo_estimado_min);
         }
-
-        // Ordenação
-        $sortField = $request->get('sort_by', 'created_at');
-        $sortDirection = $request->get('sort_direction', 'desc');
-
-        $allowedSortFields = ['nome', 'endereco', 'data_inicio', 'prazo_estimado', 'area_m2', 'valor_estimado', 'taxa_administracao', 'created_at'];
-        if (in_array($sortField, $allowedSortFields)) {
-            $query->orderBy($sortField, $sortDirection === 'asc' ? 'asc' : 'desc');
-        } else {
-            $query->orderBy('created_at', 'desc');
+        
+        if ($request->filled('prazo_estimado_max')) {
+            $query->where('prazo_estimado', '<=', $request->prazo_estimado_max);
         }
-
-        // Paginação
-        $perPage = (int) $request->get('per_page', 10);
-        $perPage = max(1, min($perPage, 100)); // Limitar entre 1 e 100
-        $page = (int) $request->get('page', 1);
-
-        return ObraResource::collection($query->paginate($perPage, ['*'], 'page', $page));
+        
+        // Filtros de valor estimado
+        if ($request->filled('valor_estimado_min')) {
+            $query->where('valor_estimado', '>=', $request->valor_estimado_min);
+        }
+        
+        if ($request->filled('valor_estimado_max')) {
+            $query->where('valor_estimado', '<=', $request->valor_estimado_max);
+        }
+        
+        // Filtros de taxa de administração
+        if ($request->filled('taxa_administracao_min')) {
+            $query->where('taxa_administracao', '>=', $request->taxa_administracao_min);
+        }
+        
+        if ($request->filled('taxa_administracao_max')) {
+            $query->where('taxa_administracao', '<=', $request->taxa_administracao_max);
+        }
+        
+        // Filtros de área
+        if ($request->filled('area_m2_min')) {
+            $query->where('area_m2', '>=', $request->area_m2_min);
+        }
+        
+        if ($request->filled('area_m2_max')) {
+            $query->where('area_m2', '<=', $request->area_m2_max);
+        }
     }
 
     /**
