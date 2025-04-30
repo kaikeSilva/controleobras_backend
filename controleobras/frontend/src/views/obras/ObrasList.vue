@@ -9,16 +9,18 @@
             placeholder="Buscar por nome"
             @input="debouncedFetchObras"
             class="w-full sm:w-64"
+            icon="search"
           />
           <AppInput
             v-model="filters.endereco"
             placeholder="Buscar por endereço"
             @input="debouncedFetchObras"
             class="w-full sm:w-64"
+            icon="search"
           />
         </div>
-        <router-link to="/obras/criar">
-          <AppButton type="primary" class="whitespace-nowrap">
+        <router-link to="/obras/criar" class="w-full sm:w-auto">
+          <AppButton type="primary" class="whitespace-nowrap w-full sm:w-auto">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
             </svg>
@@ -27,8 +29,13 @@
         </router-link>
       </div>
 
-      <!-- Tabela de obras -->
-      <div class="">
+      <!-- Loading -->
+      <div v-if="loading" class="p-6 flex justify-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+
+      <!-- Tabela de obras (visível apenas em telas maiores) -->
+      <div v-else-if="obras.length > 0" class="hidden md:block">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
@@ -57,21 +64,6 @@
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-if="loading" class="animate-pulse">
-              <td :colspan="columns.length + 1" class="px-6 py-4">
-                <div class="flex justify-center">
-                  <svg class="animate-spin h-6 w-6 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                </div>
-              </td>
-            </tr>
-            <tr v-else-if="obras.length === 0" class="hover:bg-gray-50">
-              <td :colspan="columns.length + 1" class="px-6 py-4 text-center text-gray-500">
-                Nenhuma obra encontrada.
-              </td>
-            </tr>
             <tr v-for="obra in obras" :key="obra.id" class="hover:bg-gray-50 transition-colors duration-200">
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm font-medium text-gray-900">{{ obra.nome }}</div>
@@ -83,62 +75,46 @@
                 <div class="text-sm text-gray-500">{{ formatDate(obra.data_inicio) }}</div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-500">{{ obra.prazo_estimado }} meses</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm text-gray-500">{{ formatCurrency(obra.valor_estimado) }}</div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-500">{{ obra.taxa_administracao }}%</div>
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="{
+                  'bg-green-100 text-green-800': obra.status === 'Em andamento',
+                  'bg-yellow-100 text-yellow-800': obra.status === 'Planejamento',
+                  'bg-blue-100 text-blue-800': obra.status === 'Concluída',
+                  'bg-red-100 text-red-800': obra.status === 'Cancelada',
+                  'bg-gray-100 text-gray-800': !['Em andamento', 'Planejamento', 'Concluída', 'Cancelada'].includes(obra.status)
+                }">
+                  {{ obra.status }}
+                </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div class="relative inline-block text-left dropdown-container">
                   <button 
                     @click.stop="toggleDropdown(obra)" 
-                    class="text-gray-500 hover:text-gray-900 transition-colors duration-200"
+                    class="dropdown-toggle inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                    Ações
+                    <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                     </svg>
                   </button>
                   <div 
                     v-if="dropdownOpen[obra.id]" 
-                    class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
+                    class="dropdown-menu origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
                   >
                     <div class="py-1">
-                      <router-link 
-                        :to="`/obras/${obra.id}`" 
-                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                      >
-                        <div class="flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-primary" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
-                          </svg>
-                          Visualizar
-                        </div>
+                      <router-link :to="`/obras/${obra.id}`" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        Visualizar
                       </router-link>
-                      <router-link 
-                        :to="`/obras/${obra.id}/editar`" 
-                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                      >
-                        <div class="flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-accent" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                          </svg>
-                          Editar
-                        </div>
+                      <router-link :to="`/obras/${obra.id}/editar`" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        Editar
                       </router-link>
                       <button 
-                        @click.stop="confirmDelete(obra)" 
-                        class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                        @click="confirmDelete(obra)" 
+                        class="block w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-gray-100"
                       >
-                        <div class="flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-danger" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                          </svg>
-                          Excluir
-                        </div>
+                        Excluir
                       </button>
                     </div>
                   </div>
@@ -149,9 +125,79 @@
         </table>
       </div>
 
+      <!-- Cards para visualização mobile -->
+      <div v-else-if="obras.length > 0" class="md:hidden">
+        <div v-for="obra in obras" :key="obra.id" class="border-b border-gray-200 p-4">
+          <div class="flex justify-between items-start mb-2">
+            <h3 class="text-lg font-medium text-gray-900">{{ obra.nome }}</h3>
+            <div class="relative">
+              <button 
+                type="button" 
+                class="dropdown-toggle inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-3 py-1 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                @click="toggleDropdown(obra)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                </svg>
+              </button>
+              <div 
+                v-if="dropdownOpen[obra.id]" 
+                class="dropdown-menu origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10"
+              >
+                <div class="py-1">
+                  <router-link :to="`/obras/${obra.id}`" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    Visualizar
+                  </router-link>
+                  <router-link :to="`/obras/${obra.id}/editar`" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    Editar
+                  </router-link>
+                  <button 
+                    @click="confirmDelete(obra)" 
+                    class="block w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-gray-100"
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 gap-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-500">Endereço:</span>
+              <span class="text-gray-900">{{ obra.endereco }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Data Início:</span>
+              <span class="text-gray-900">{{ formatDate(obra.data_inicio) }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Valor Estimado:</span>
+              <span class="text-gray-900">{{ formatCurrency(obra.valor_estimado) }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-500">Status:</span>
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="{
+                'bg-green-100 text-green-800': obra.status === 'Em andamento',
+                'bg-yellow-100 text-yellow-800': obra.status === 'Planejamento',
+                'bg-blue-100 text-blue-800': obra.status === 'Concluída',
+                'bg-red-100 text-red-800': obra.status === 'Cancelada',
+                'bg-gray-100 text-gray-800': !['Em andamento', 'Planejamento', 'Concluída', 'Cancelada'].includes(obra.status)
+              }">
+                {{ obra.status }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sem resultados -->
+      <div v-else class="p-6 text-center">
+        <p class="text-gray-500">Nenhuma obra encontrada.</p>
+      </div>
+
       <!-- Paginação -->
-      <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-        <div class="text-sm text-gray-500">
+      <div class="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="text-sm text-gray-500 text-center sm:text-left">
           Mostrando <span class="font-medium">{{ pagination.from || 0 }}</span> a <span class="font-medium">{{ pagination.to || 0 }}</span> de <span class="font-medium">{{ pagination.total || 0 }}</span> resultados
         </div>
         <div class="flex space-x-2">
@@ -201,70 +247,76 @@ import { useRouter } from 'vue-router';
 import AppLayout from '@/components/AppLayout.vue';
 import AppButton from '@/components/AppButton.vue';
 import AppInput from '@/components/AppInput.vue';
-import obraService, { Obra, ObraFilters, PaginatedResponse } from '@/services/obraService';
+import obraService from '@/services/obraService';
 import { useToast } from '@/services/toastService';
 
 const router = useRouter();
 const toast = useToast();
 
 // Estado
-const obras = ref<Obra[]>([]);
+const obras = ref([]);
 const loading = ref(true);
 const showDeleteModal = ref(false);
-const obraToDelete = ref<Obra | null>(null);
-
-// Filtros e paginação
-const filters = reactive<ObraFilters>({
-  nome: '',
-  endereco: '',
-  sort_by: 'created_at',
-  sort_direction: 'desc',
-  page: 1,
+const obraToDelete = ref(null);
+const dropdownOpen = ref({});
+const pagination = ref({
+  current_page: 1,
+  from: 0,
+  to: 0,
+  total: 0,
+  last_page: 1,
   per_page: 10
 });
 
-const pagination = reactive({
-  current_page: 1,
-  from: 0,
-  last_page: 1,
-  path: '',
+// Filtros e ordenação
+const filters = reactive({
+  nome: '',
+  endereco: '',
+  page: 1,
   per_page: 10,
-  to: 0,
-  total: 0
+  sort_by: '',
+  sort_direction: 'asc'
 });
 
 // Colunas da tabela
-const columns = [
-  { key: 'nome', label: 'Nome' },
-  { key: 'endereco', label: 'Endereço' },
-  { key: 'data_inicio', label: 'Data de Início' },
-  { key: 'prazo_estimado', label: 'Prazo (meses)' },
-  { key: 'valor_estimado', label: 'Valor Estimado' },
-  { key: 'taxa_administracao', label: 'Taxa Adm. (%)' }
-];
+const columns = reactive([
+  { key: 'nome', label: 'Nome', sortable: true },
+  { key: 'endereco', label: 'Endereço', sortable: true },
+  { key: 'data_inicio', label: 'Data Início', sortable: true },
+  { key: 'valor_estimado', label: 'Valor Estimado', sortable: true },
+  { key: 'status', label: 'Status', sortable: true }
+]);
 
-// Dropdown
-const dropdownOpen = ref<Record<number, boolean>>({});
-
-// Fechar dropdown quando clicar fora
-const closeAllDropdowns = () => {
-  Object.keys(dropdownOpen.value).forEach(key => {
-    dropdownOpen.value[Number(key)] = false;
-  });
+// Ordenação
+const sortBy = (column) => {
+  if (!column || !columns.find(col => col.key === column)?.sortable) return;
+  
+  if (filters.sort_by === column) {
+    filters.sort_direction = filters.sort_direction === 'asc' ? 'desc' : 'asc';
+  } else {
+    filters.sort_by = column;
+    filters.sort_direction = 'asc';
+  }
+  
+  fetchObras();
 };
 
-// Métodos
+// Buscar obras
 const fetchObras = async () => {
   loading.value = true;
   try {
-    const response: PaginatedResponse<Obra> = await obraService.getObras(filters);
+    const response = await obraService.getObras(filters);
     obras.value = response.data;
-    
-    // Atualizar paginação
-    Object.assign(pagination, response.meta);
+    pagination.value = {
+      current_page: response.current_page,
+      from: response.from,
+      to: response.to,
+      total: response.total,
+      last_page: response.last_page,
+      per_page: response.per_page
+    };
   } catch (error) {
     toast.error('Erro ao carregar obras');
-    console.error('Erro ao carregar obras:', error);
   } finally {
     loading.value = false;
   }
@@ -272,42 +324,54 @@ const fetchObras = async () => {
 
 // Debounce para busca
 const debouncedFetchObras = (() => {
-  let timeout: ReturnType<typeof setTimeout>;
+  let timeout;
   return () => {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
-      filters.page = 1; // Resetar paginação ao filtrar
+      filters.page = 1;
       fetchObras();
     }, 300);
   };
 })();
 
-// Ordenação
-const sortBy = (column: string) => {
-  if (filters.sort_by === column) {
-    filters.sort_direction = filters.sort_direction === 'asc' ? 'desc' : 'asc';
-  } else {
-    filters.sort_by = column;
-    filters.sort_direction = 'asc';
-  }
-  fetchObras();
-};
-
 // Paginação
-const goToPage = (page: number) => {
-  if (page < 1 || page > pagination.last_page) return;
+const goToPage = (page) => {
   filters.page = page;
   fetchObras();
 };
 
-// Exclusão
-const confirmDelete = (obra: Obra) => {
+// Toggle dropdown
+const toggleDropdown = (obra) => {
+  // Fechar todos os outros dropdowns
+  Object.keys(dropdownOpen.value).forEach(key => {
+    if (parseInt(key) !== obra.id) {
+      dropdownOpen.value[parseInt(key)] = false;
+    }
+  });
+  
+  // Toggle o dropdown atual
+  dropdownOpen.value[obra.id] = !dropdownOpen.value[obra.id];
+};
+
+// Fechar dropdown ao clicar fora
+const closeDropdowns = (event) => {
+  const target = event.target;
+  if (!target.closest('.dropdown-menu') && !target.closest('.dropdown-toggle')) {
+    Object.keys(dropdownOpen.value).forEach(key => {
+      dropdownOpen.value[parseInt(key)] = false;
+    });
+  }
+};
+
+// Confirmar exclusão
+const confirmDelete = (obra) => {
   obraToDelete.value = obra;
   showDeleteModal.value = true;
 };
 
+// Excluir obra
 const deleteObra = async () => {
-  if (!obraToDelete.value?.id) return;
+  if (!obraToDelete.value) return;
   
   try {
     await obraService.deleteObra(obraToDelete.value.id);
@@ -315,51 +379,32 @@ const deleteObra = async () => {
     fetchObras();
   } catch (error) {
     toast.error('Erro ao excluir obra');
-    console.error('Erro ao excluir obra:', error);
   } finally {
     showDeleteModal.value = false;
     obraToDelete.value = null;
   }
 };
 
-// Dropdown
-const toggleDropdown = (obra: Obra) => {
-  // Fechar todos os outros dropdowns primeiro
-  Object.keys(dropdownOpen.value).forEach(key => {
-    if (Number(key) !== obra.id) {
-      dropdownOpen.value[Number(key)] = false;
-    }
-  });
-  // Alternar o dropdown atual
-  dropdownOpen.value[obra.id!] = !dropdownOpen.value[obra.id!];
+// Formatar data
+const formatDate = (date) => {
+  if (!date) return '-';
+  return new Date(date).toLocaleDateString('pt-BR');
 };
 
-// Formatação
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('pt-BR').format(date);
+// Formatar moeda
+const formatCurrency = (value) => {
+  if (value === undefined || value === null) return '-';
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 };
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-  }).format(value);
-};
-
-// Inicialização
+// Eventos
 onMounted(() => {
   fetchObras();
-  document.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    if (!target.closest('.dropdown-container')) {
-      closeAllDropdowns();
-    }
-  });
+  document.addEventListener('click', closeDropdowns);
 });
 
-// Remover event listener ao desmontar o componente
+// Limpar event listeners
 onUnmounted(() => {
-  document.removeEventListener('click', closeAllDropdowns);
+  document.removeEventListener('click', closeDropdowns);
 });
 </script>
