@@ -3,19 +3,121 @@
     <div class="bg-white shadow-md rounded-lg">
       <!-- Cabeçalho com filtros e botão de adicionar -->
       <div class="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div class="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-          <AppInput
-            v-model="filters.nome"
-            placeholder="Buscar por nome"
-            class="w-full sm:w-64"
-            icon="search"
-          />
-          <AppInput
-            v-model="filters.endereco"
-            placeholder="Buscar por endereço"
-            class="w-full sm:w-64"
-            icon="search"
-          />
+        <div class="flex flex-col gap-4 w-full">
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <!-- Filtros de texto -->
+            <AppInput
+              v-model="filters.nome"
+              placeholder="Nome da obra"
+              class="w-full"
+              icon="search"
+            />
+            <AppInput
+              v-model="filters.endereco"
+              placeholder="Endereço"
+              class="w-full"
+              icon="search"
+            />
+            
+            <!-- Filtro de data de início (range) -->
+            <div class="w-full">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Data de início</label>
+              <div class="flex gap-2">
+                <div class="w-1/2">
+                  <label class="block text-xs text-gray-500 mb-1">De</label>
+                  <input 
+                    type="date" 
+                    v-model="filters.data_inicio_min"
+                    class="w-full rounded-lg border border-gray-300 shadow-sm h-11 px-4 focus:outline-none focus:ring-4 focus:border-blue-500 focus:ring-blue-200"
+                  />
+                </div>
+                <div class="w-1/2">
+                  <label class="block text-xs text-gray-500 mb-1">Até</label>
+                  <input 
+                    type="date" 
+                    v-model="filters.data_inicio_max"
+                    class="w-full rounded-lg border border-gray-300 shadow-sm h-11 px-4 focus:outline-none focus:ring-4 focus:border-blue-500 focus:ring-blue-200"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <!-- Filtros numéricos com min/max -->
+            <div class="w-full">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Prazo estimado (dias)</label>
+              <div class="flex gap-2">
+                <input 
+                  type="number" 
+                  v-model="filters.prazo_estimado_min"
+                  placeholder="Mínimo" 
+                  class="w-1/2 rounded-lg border border-gray-300 shadow-sm h-11 px-4 focus:outline-none focus:ring-4 focus:border-blue-500 focus:ring-blue-200"
+                />
+                <input 
+                  type="number" 
+                  v-model="filters.prazo_estimado_max"
+                  placeholder="Máximo" 
+                  class="w-1/2 rounded-lg border border-gray-300 shadow-sm h-11 px-4 focus:outline-none focus:ring-4 focus:border-blue-500 focus:ring-blue-200"
+                />
+              </div>
+            </div>
+            
+            <div class="w-full">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Valor estimado (R$)</label>
+              <div class="flex gap-2">
+                <input 
+                  type="number" 
+                  v-model="filters.valor_estimado_min"
+                  placeholder="Mínimo" 
+                  class="w-1/2 rounded-lg border border-gray-300 shadow-sm h-11 px-4 focus:outline-none focus:ring-4 focus:border-blue-500 focus:ring-blue-200"
+                />
+                <input 
+                  type="number" 
+                  v-model="filters.valor_estimado_max"
+                  placeholder="Máximo" 
+                  class="w-1/2 rounded-lg border border-gray-300 shadow-sm h-11 px-4 focus:outline-none focus:ring-4 focus:border-blue-500 focus:ring-blue-200"
+                />
+              </div>
+            </div>
+            
+            <div class="w-full">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Taxa de administração (%)</label>
+              <div class="flex gap-2">
+                <input 
+                  type="number" 
+                  v-model="filters.taxa_administracao_min"
+                  placeholder="Mínimo" 
+                  step="0.01"
+                  class="w-1/2 rounded-lg border border-gray-300 shadow-sm h-11 px-4 focus:outline-none focus:ring-4 focus:border-blue-500 focus:ring-blue-200"
+                />
+                <input 
+                  type="number" 
+                  v-model="filters.taxa_administracao_max"
+                  placeholder="Máximo" 
+                  step="0.01"
+                  class="w-1/2 rounded-lg border border-gray-300 shadow-sm h-11 px-4 focus:outline-none focus:ring-4 focus:border-blue-500 focus:ring-blue-200"
+                />
+              </div>
+            </div>
+            
+            <div class="w-full">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Área (m²)</label>
+              <div class="flex gap-2">
+                <input 
+                  type="number" 
+                  v-model="filters.area_m2_min"
+                  placeholder="Mínimo" 
+                  class="w-1/2 rounded-lg border border-gray-300 shadow-sm h-11 px-4 focus:outline-none focus:ring-4 focus:border-blue-500 focus:ring-blue-200"
+                />
+                <input 
+                  type="number" 
+                  v-model="filters.area_m2_max"
+                  placeholder="Máximo" 
+                  class="w-1/2 rounded-lg border border-gray-300 shadow-sm h-11 px-4 focus:outline-none focus:ring-4 focus:border-blue-500 focus:ring-blue-200"
+                />
+              </div>
+            </div>
+          </div>
+          
           <div class="flex gap-2 w-full sm:w-auto">
             <button 
               @click="applyFilters" 
@@ -37,7 +139,7 @@
             </button>
           </div>
         </div>
-        <router-link to="/obras/criar" class="w-full sm:w-auto">
+        <router-link to="/obras/criar" class="w-full sm:w-auto mt-4 md:mt-0">
           <AppButton type="primary" class="whitespace-nowrap w-full sm:w-auto">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
@@ -75,7 +177,7 @@
                   {{ column.label }}
                   <span v-if="filters.sort_by === column.key" class="ml-1">
                     <svg v-if="filters.sort_direction === 'asc'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                      <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 011.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
                     </svg>
                     <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                       <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -312,6 +414,16 @@ const pagination = ref({
 const filters = reactive({
   nome: '',
   endereco: '',
+  data_inicio_min: '',
+  data_inicio_max: '',
+  prazo_estimado_min: '',
+  prazo_estimado_max: '',
+  valor_estimado_min: '',
+  valor_estimado_max: '',
+  taxa_administracao_min: '',
+  taxa_administracao_max: '',
+  area_m2_min: '',
+  area_m2_max: '',
   page: 1,
   per_page: 10,
   sort_by: '',
@@ -376,6 +488,16 @@ const applyFilters = () => {
 const clearFilters = () => {
   filters.nome = '';
   filters.endereco = '';
+  filters.data_inicio_min = '';
+  filters.data_inicio_max = '';
+  filters.prazo_estimado_min = '';
+  filters.prazo_estimado_max = '';
+  filters.valor_estimado_min = '';
+  filters.valor_estimado_max = '';
+  filters.taxa_administracao_min = '';
+  filters.taxa_administracao_max = '';
+  filters.area_m2_min = '';
+  filters.area_m2_max = '';
   filters.page = 1;
   filters.per_page = 10;
   filters.sort_by = '';

@@ -17,6 +17,16 @@ export interface Obra {
 export interface ObraFilters {
   nome?: string;
   endereco?: string;
+  data_inicio_min?: string;
+  data_inicio_max?: string;
+  prazo_estimado_min?: number;
+  prazo_estimado_max?: number;
+  valor_estimado_min?: number;
+  valor_estimado_max?: number;
+  taxa_administracao_min?: number;
+  taxa_administracao_max?: number;
+  area_m2_min?: number;
+  area_m2_max?: number;
   sort_by?: string;
   sort_direction?: 'asc' | 'desc';
   page?: number;

@@ -22,10 +22,35 @@ class ObraController extends Controller
         $query = Obra::query();
 
         // Aplicar filtros dinâmicos com case-insensitive
-        $filters = ['nome', 'endereco', 'data_inicio', 'prazo_estimado'];
+        $filters = ['nome', 'endereco'];
         foreach ($filters as $filter) {
             if ($request->has($filter) && $request->get($filter) !== null && $request->get($filter) !== '') {
                 $query->whereRaw('LOWER(' . $filter . ') LIKE ?', ['%' . strtolower($request->get($filter)) . '%']);
+            }
+        }
+
+        // Filtro de data de início com intervalo
+        if ($request->filled('data_inicio_min')) {
+            $query->where('data_inicio', '>=', $request->data_inicio_min);
+        }
+        
+        if ($request->filled('data_inicio_max')) {
+            $query->where('data_inicio', '<=', $request->data_inicio_max);
+        }
+
+        // Filtros para campos numéricos com ranges (min/max)
+        $numericFilters = ['prazo_estimado', 'valor_estimado', 'taxa_administracao', 'area_m2'];
+        foreach ($numericFilters as $filter) {
+            // Filtro para valor mínimo
+            $minFilter = $filter . '_min';
+            if ($request->has($minFilter) && $request->get($minFilter) !== null && $request->get($minFilter) !== '') {
+                $query->where($filter, '>=', $request->get($minFilter));
+            }
+            
+            // Filtro para valor máximo
+            $maxFilter = $filter . '_max';
+            if ($request->has($maxFilter) && $request->get($maxFilter) !== null && $request->get($maxFilter) !== '') {
+                $query->where($filter, '<=', $request->get($maxFilter));
             }
         }
 
