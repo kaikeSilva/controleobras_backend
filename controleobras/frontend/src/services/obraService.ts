@@ -91,7 +91,11 @@ const obraService = {
   },
 
   deleteObra: (id: number): Promise<void> => {
-    return api.delete(`/obras/${id}`);
+    return api.delete(`/obras/${id}`)
+      .then((response: any) => {
+        // Garantir que a resposta seja processada corretamente
+        return response.data;
+      });
   }
 };
 

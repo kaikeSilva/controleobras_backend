@@ -157,11 +157,12 @@ class ObraController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Obra  $obra
+     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Obra $obra)
+    public function destroy($id)
     {
+        $obra = Obra::findOrFail($id);
         $obra->delete();
         
         return response()->noContent();

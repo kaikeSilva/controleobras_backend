@@ -416,7 +416,7 @@ import obraService from '@/services/obraService';
 import { useToast } from '@/services/toastService';
 
 const router = useRouter();
-const toast = useToast();
+const { toast } = useToast();
 
 // Estado
 const obras = ref([]);
@@ -580,12 +580,16 @@ const deleteObra = async () => {
   try {
     await obraService.deleteObra(obraToDelete.value.id);
     toast.success('Obra excluída com sucesso');
-    fetchObras();
-  } catch (error) {
-    toast.error('Erro ao excluir obra');
-  } finally {
+    
+    // Atualiza a lista após a exclusão - forçando uma nova requisição
+    await fetchObras();
+    
+    // Fecha o modal e limpa a referência
     showDeleteModal.value = false;
     obraToDelete.value = null;
+  } catch (error) {
+    console.error('Erro ao excluir obra:', error);
+    toast.error('Erro ao excluir obra');
   }
 };
 
