@@ -132,12 +132,6 @@
 
       <!-- Cards para visualização mobile -->
       <div v-if="!loading && obras.length > 0" class="md:hidden">
-        <!-- Contador de total de itens para mobile -->
-        <div class="px-6 py-3 bg-gray-50 border-b border-gray-200">
-          <p class="text-sm text-gray-700">
-            <span class="font-medium">{{ obras.length }}</span> obras encontradas
-          </p>
-        </div>
         <div v-for="obra in obras" :key="obra.id" class="border-b border-gray-200 p-4">
           <div class="flex justify-between items-start">
             <div class="break-words max-w-[200px]">
