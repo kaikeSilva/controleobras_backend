@@ -313,7 +313,9 @@ const columns = reactive([
 
 // Ordenação
 const sortBy = (column) => {
-  if (!column || !columns.find(col => col.key === column)?.sortable) return;
+  // Verifica se a coluna existe e se é ordenável
+  const columnObj = columns.find(col => col.key === column);
+  if (!column || !columnObj || !columnObj.sortable) return;
   
   if (filters.sort_by === column) {
     filters.sort_direction = filters.sort_direction === 'asc' ? 'desc' : 'asc';

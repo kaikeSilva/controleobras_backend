@@ -33,7 +33,7 @@ class ObraController extends Controller
         $sortField = $request->get('sort_by', 'created_at');
         $sortDirection = $request->get('sort_direction', 'desc');
 
-        $allowedSortFields = ['nome', 'data_inicio', 'prazo_estimado', 'area_m2', 'valor_estimado', 'created_at'];
+        $allowedSortFields = ['nome', 'endereco', 'data_inicio', 'prazo_estimado', 'area_m2', 'valor_estimado', 'taxa_administracao', 'created_at'];
         if (in_array($sortField, $allowedSortFields)) {
             $query->orderBy($sortField, $sortDirection === 'asc' ? 'asc' : 'desc');
         } else {
