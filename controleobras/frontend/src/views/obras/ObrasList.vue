@@ -7,17 +7,35 @@
           <AppInput
             v-model="filters.nome"
             placeholder="Buscar por nome"
-            @input="debouncedFetchObras"
             class="w-full sm:w-64"
             icon="search"
           />
           <AppInput
             v-model="filters.endereco"
             placeholder="Buscar por endereço"
-            @input="debouncedFetchObras"
             class="w-full sm:w-64"
             icon="search"
           />
+          <div class="flex gap-2 w-full sm:w-auto">
+            <button 
+              @click="applyFilters" 
+              class="h-11 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center w-full sm:w-32 shadow-sm"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
+              </svg>
+              Filtrar
+            </button>
+            <button 
+              @click="clearFilters" 
+              class="h-11 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors flex items-center justify-center w-full sm:w-32 shadow-sm"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+              Limpar
+            </button>
+          </div>
         </div>
         <router-link to="/obras/criar" class="w-full sm:w-auto">
           <AppButton type="primary" class="whitespace-nowrap w-full sm:w-auto">
@@ -348,17 +366,22 @@ const fetchObras = async () => {
   }
 };
 
-// Debounce para busca
-const debouncedFetchObras = (() => {
-  let timeout;
-  return () => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      filters.page = 1;
-      fetchObras();
-    }, 300);
-  };
-})();
+// Aplicar filtros
+const applyFilters = () => {
+  filters.page = 1;
+  fetchObras();
+};
+
+// Limpar filtros
+const clearFilters = () => {
+  filters.nome = '';
+  filters.endereco = '';
+  filters.page = 1;
+  filters.per_page = 10;
+  filters.sort_by = '';
+  filters.sort_direction = 'asc';
+  fetchObras();
+};
 
 // Paginação
 const goToPage = (page) => {
