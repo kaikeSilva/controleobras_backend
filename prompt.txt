@@ -3,7 +3,5 @@ leia o arquivo laravel_best_pratices.txt
 leio o arquivo escopo.txt
 
 com base nestes arquivos, implemente a funcionalidade solicitada.
-
-implemente a tela de listagem de obras com uma tabela mostrando as obras no sistema.
-separe a analise de bugs da implementacao da solucao, implemente primeiro e depois procure por problemas
-foque apenas na implementacao solicitada
+adicione um contador de total de itens no topo da tabela este contador deve ser preenchido com o mesmo valor que aparece na paginacao  Mostrando 1 a 8 de 8 resultados, no caso os 8
+foque na implementacao apenas deste problema, nao tente resolver erros de lint, nao tente resolver outros erros foque apenas na implementacao

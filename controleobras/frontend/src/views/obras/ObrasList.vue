@@ -34,6 +34,13 @@
         <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
 
+      <!-- Contador de total de itens -->
+      <div v-if="!loading && obras.length > 0" class="px-6 py-3 bg-gray-50 border-b border-gray-200">
+        <p class="text-sm text-gray-700">
+          <span class="font-medium">{{ pagination.total || 0 }}</span> obras encontradas
+        </p>
+      </div>
+
       <!-- Tabela de obras (visível apenas em telas maiores) -->
       <div v-if="!loading && obras.length > 0" class="hidden md:block">
         <table class="min-w-full divide-y divide-gray-200">
@@ -65,28 +72,26 @@
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <tr v-for="obra in obras" :key="obra.id" class="hover:bg-gray-50 transition-colors duration-200">
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-gray-900">{{ obra.nome }}</div>
+              <td class="px-6 py-4">
+                <div class="text-sm font-medium text-gray-900 break-words max-w-[200px]">{{ obra.nome }}</div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-500">{{ obra.endereco }}</div>
+              <td class="px-6 py-4">
+                <div class="text-sm text-gray-500 break-words max-w-[200px]">{{ obra.endereco }}</div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm text-gray-500">{{ formatDate(obra.data_inicio) }}</div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-500">{{ obra.prazo_estimado }} dia(s)</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-500">{{ obra.area_m2 }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm text-gray-500">{{ formatCurrency(obra.valor_estimado) }}</div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="{
-                  'bg-green-100 text-green-800': obra.status === 'Em andamento',
-                  'bg-yellow-100 text-yellow-800': obra.status === 'Planejamento',
-                  'bg-blue-100 text-blue-800': obra.status === 'Concluída',
-                  'bg-red-100 text-red-800': obra.status === 'Cancelada',
-                  'bg-gray-100 text-gray-800': !['Em andamento', 'Planejamento', 'Concluída', 'Cancelada'].includes(obra.status)
-                }">
-                  {{ obra.status }}
-                </span>
+                <div class="text-sm text-gray-500">{{ obra.taxa_administracao }}%</div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div class="relative inline-block text-left dropdown-container">
@@ -127,9 +132,18 @@
 
       <!-- Cards para visualização mobile -->
       <div v-if="!loading && obras.length > 0" class="md:hidden">
+        <!-- Contador de total de itens para mobile -->
+        <div class="px-6 py-3 bg-gray-50 border-b border-gray-200">
+          <p class="text-sm text-gray-700">
+            <span class="font-medium">{{ obras.length }}</span> obras encontradas
+          </p>
+        </div>
         <div v-for="obra in obras" :key="obra.id" class="border-b border-gray-200 p-4">
-          <div class="flex justify-between items-start mb-2">
-            <h3 class="text-lg font-medium text-gray-900">{{ obra.nome }}</h3>
+          <div class="flex justify-between items-start">
+            <div class="break-words max-w-[200px]">
+              <h3 class="text-lg font-medium text-gray-900">{{ obra.nome }}</h3>
+              <p class="text-sm text-gray-500 mt-1 break-words">{{ obra.endereco }}</p>
+            </div>
             <div class="relative">
               <button 
                 type="button" 
@@ -163,28 +177,24 @@
           </div>
           <div class="grid grid-cols-1 gap-2 text-sm">
             <div class="flex justify-between">
-              <span class="text-gray-500">Endereço:</span>
-              <span class="text-gray-900">{{ obra.endereco }}</span>
-            </div>
-            <div class="flex justify-between">
               <span class="text-gray-500">Data Início:</span>
               <span class="text-gray-900">{{ formatDate(obra.data_inicio) }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Prazo Estimado:</span>
+              <span class="text-gray-900">{{ obra.prazo_estimado }} dia(s)</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Área (m²):</span>
+              <span class="text-gray-900">{{ obra.area_m2 }}</span>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-500">Valor Estimado:</span>
               <span class="text-gray-900">{{ formatCurrency(obra.valor_estimado) }}</span>
             </div>
-            <div class="flex justify-between items-center">
-              <span class="text-gray-500">Status:</span>
-              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="{
-                'bg-green-100 text-green-800': obra.status === 'Em andamento',
-                'bg-yellow-100 text-yellow-800': obra.status === 'Planejamento',
-                'bg-blue-100 text-blue-800': obra.status === 'Concluída',
-                'bg-red-100 text-red-800': obra.status === 'Cancelada',
-                'bg-gray-100 text-gray-800': !['Em andamento', 'Planejamento', 'Concluída', 'Cancelada'].includes(obra.status)
-              }">
-                {{ obra.status }}
-              </span>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Taxa Adm.:</span>
+              <span class="text-gray-900">{{ obra.taxa_administracao }}%</span>
             </div>
           </div>
         </div>
@@ -197,10 +207,25 @@
 
       <!-- Paginação -->
       <div class="px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div class="text-sm text-gray-500 text-center sm:text-left">
-          Mostrando <span class="font-medium">{{ pagination.from || 0 }}</span> a <span class="font-medium">{{ pagination.to || 0 }}</span> de <span class="font-medium">{{ pagination.total || 0 }}</span> resultados
+        <div class="flex flex-col sm:flex-row items-center gap-4">
+          <div class="text-sm text-gray-500 text-center sm:text-left">
+            Mostrando <span class="font-medium">{{ pagination.from || 0 }}</span> a <span class="font-medium">{{ pagination.to || 0 }}</span> de <span class="font-medium">{{ pagination.total || 0 }}</span> resultados
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-gray-500">Itens por página:</span>
+            <select 
+              v-model="filters.per_page" 
+              @change="changeItemsPerPage"
+              class="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
         </div>
-        <div class="flex space-x-2">
+        <div class="flex space-x-2 items-center">
           <AppButton 
             type="outline" 
             size="sm" 
@@ -209,6 +234,9 @@
           >
             Anterior
           </AppButton>
+          <div class="px-3 py-1 text-sm font-medium text-gray-700 bg-gray-100 rounded">
+            Página {{ pagination.current_page }} de {{ pagination.last_page }}
+          </div>
           <AppButton 
             type="outline" 
             size="sm" 
@@ -283,8 +311,10 @@ const columns = reactive([
   { key: 'nome', label: 'Nome', sortable: true },
   { key: 'endereco', label: 'Endereço', sortable: true },
   { key: 'data_inicio', label: 'Data Início', sortable: true },
+  { key: 'prazo_estimado', label: 'Prazo Estimado', sortable: true },
+  { key: 'area_m2', label: 'Área (m²)', sortable: true },
   { key: 'valor_estimado', label: 'Valor Estimado', sortable: true },
-  { key: 'status', label: 'Status', sortable: true }
+  { key: 'taxa_administracao', label: 'Taxa Adm.', sortable: true }
 ]);
 
 // Ordenação
@@ -308,12 +338,12 @@ const fetchObras = async () => {
     const response = await obraService.getObras(filters);
     obras.value = response.data;
     pagination.value = {
-      current_page: response.current_page,
-      from: response.from,
-      to: response.to,
-      total: response.total,
-      last_page: response.last_page,
-      per_page: response.per_page
+      current_page: response.meta.current_page,
+      from: response.meta.from,
+      to: response.meta.to,
+      total: response.meta.total,
+      last_page: response.meta.last_page,
+      per_page: response.meta.per_page
     };
   } catch (error) {
     toast.error('Erro ao carregar obras');
@@ -395,6 +425,12 @@ const formatDate = (date) => {
 const formatCurrency = (value) => {
   if (value === undefined || value === null) return '-';
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+};
+
+// Alterar itens por página
+const changeItemsPerPage = () => {
+  filters.page = 1;
+  fetchObras();
 };
 
 // Eventos
