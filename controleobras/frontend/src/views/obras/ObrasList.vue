@@ -35,7 +35,7 @@
       </div>
 
       <!-- Tabela de obras (visível apenas em telas maiores) -->
-      <div v-else-if="obras.length > 0" class="hidden md:block">
+      <div v-if="!loading && obras.length > 0" class="hidden md:block">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
@@ -126,7 +126,7 @@
       </div>
 
       <!-- Cards para visualização mobile -->
-      <div v-else-if="obras.length > 0" class="md:hidden">
+      <div v-if="!loading && obras.length > 0" class="md:hidden">
         <div v-for="obra in obras" :key="obra.id" class="border-b border-gray-200 p-4">
           <div class="flex justify-between items-start mb-2">
             <h3 class="text-lg font-medium text-gray-900">{{ obra.nome }}</h3>
@@ -191,7 +191,7 @@
       </div>
 
       <!-- Sem resultados -->
-      <div v-else class="p-6 text-center">
+      <div v-if="!loading && obras.length === 0" class="p-6 text-center">
         <p class="text-gray-500">Nenhuma obra encontrada.</p>
       </div>
 
