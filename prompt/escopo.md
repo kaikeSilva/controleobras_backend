@@ -180,3 +180,40 @@ Classes do sistema: 🔧 Entidades Principais e Relacionamentos
         Descrição
 
         Comprovante (opcional)
+
+Entidades e Relacionamentos
+Cliente
+
+Possui várias Obras (1:N)
+
+Obra
+
+Pertence a um Cliente (N:1)
+Possui vários Gastos (1:N)
+
+Gasto (Item de Gasto)
+
+Pertence a uma Obra (N:1)
+É classificado em uma Categoria de Gasto (N:1)
+Tem uma Fonte Pagadora (N:1)
+
+Categoria de Gasto
+
+Classifica vários Gastos (1:N)
+Exemplos: Mão de obra, Material, Alimentação
+
+Fonte Pagadora
+
+Financia vários Gastos (1:N)
+Representa de onde vem o dinheiro para pagar cada gasto específico
+
+Fluxo de Dados
+
+Cliente tem múltiplas Obras
+Cada Obra acumula Gastos ao longo do tempo
+Cada Gasto é categorizado (tipo de despesa) e tem origem definida (fonte do pagamento)
+Sistema calcula totais por obra, por categoria, por fonte pagadora
+Aplica taxa de administração sobre gastos totais da obra
+Gera relatórios consolidados para o cliente
+
+Essa estrutura permite controle granular: o cliente vê todas suas obras, cada obra mostra seus gastos detalhados, e cada gasto tem sua classificação e origem de financiamento bem definidas.
