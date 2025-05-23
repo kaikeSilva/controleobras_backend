@@ -1,0 +1,154 @@
+openapi: 3.0.3
+info:
+  title: API de Clientes
+  description: API REST para CRUD de clientes usando Laravel
+  version: 1.0.0
+servers:
+  - url: http://localhost/api
+paths:
+  /clients:
+    get:
+      summary: Lista todos os clientes
+      tags:
+        - Clientes
+      responses:
+        '200':
+          description: Lista de clientes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+    post:
+      summary: Cria um novo cliente
+      tags:
+        - Clientes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientRequest'
+      responses:
+        '201':
+          description: Cliente criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '422':
+          description: Dados inválidos
+  /clients/{id}:
+    get:
+      summary: Retorna um cliente específico
+      tags:
+        - Clientes
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID do cliente
+      responses:
+        '200':
+          description: Dados do cliente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '404':
+          description: Cliente não encontrado
+    put:
+      summary: Atualiza um cliente
+      tags:
+        - Clientes
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID do cliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientRequest'
+      responses:
+        '200':
+          description: Cliente atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '422':
+          description: Dados inválidos
+        '404':
+          description: Cliente não encontrado
+    delete:
+      summary: Remove um cliente
+      tags:
+        - Clientes
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID do cliente
+      responses:
+        '204':
+          description: Cliente removido com sucesso
+        '404':
+          description: Cliente não encontrado
+components:
+  schemas:
+    Client:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: João Silva
+        email:
+          type: string
+          example: joao@exemplo.com
+        phone:
+          type: string
+          nullable: true
+          example: '+55 11 99999-0000'
+        address:
+          type: string
+          nullable: true
+          example: 'Rua das Flores, 123'
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-05-23T15:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2025-05-23T15:00:00Z'
+    ClientRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: João Silva
+        email:
+          type: string
+          example: joao@exemplo.com
+        phone:
+          type: string
+          example: '+55 11 99999-0000'
+        address:
+          type: string
+          example: 'Rua das Flores, 123'
+      required:
+        - name
+        - email

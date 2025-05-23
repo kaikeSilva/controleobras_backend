@@ -1,9 +1,0 @@
-leia o arquivo best_pratices_vuejs.txt
-leia o arquivo laravel_best_pratices.txt
-leio o arquivo escopo.txt
-
-com base nestes arquivos, implemente a funcionalidade solicitada.
-baseado no que foi construido a nivel de requisitos funcionais (listagem, delecao, ordencao, paginação, filtros e etc) e nao funcionais (estilo, design, responsividade, etc) para a tela de obrasList, crie um arquivo de boas praticas para a costrucao de views de list para servir de orientacao para as proximas implementacoes destes tipos de tela que contem. 
-foque na implementacao apenas deste problema, nao tente resolver erros de lint, nao tente resolver outros erros foque apenas na implementacao
-
-
