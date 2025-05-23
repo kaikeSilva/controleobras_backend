@@ -1,26 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Página Inicial')
+@section('title', 'Dashboard')
 
 @section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">{{ __('Dashboard') }}</div>
-
-                <div class="card-body">
-                    @if (session('status'))
-                        <div class="alert alert-success" role="alert">
-                            {{ session('status') }}
-                        </div>
-                    @endif
-
-                    <h1>Bem-vindo ao Sistema de Controle de Obra!</h1>
-                    <p>Esta é a página principal do seu sistema.</p>
-                </div>
-            </div>
-        </div>
+    {{-- The content of this section will be dynamically filled by admin_panel.js --}}
+    {{-- The script looks for an element with id="contentArea" --}}
+    <div id="contentArea" class="content-area">
+        {{-- Initial loading state or placeholder content can go here if desired, --}}
+        {{-- but admin_panel.js will populate this on load. --}}
     </div>
-</div>
 @endsection

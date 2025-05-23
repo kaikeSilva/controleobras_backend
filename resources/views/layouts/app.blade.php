@@ -3,52 +3,159 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <title>{{ config('app.name', 'Laravel') }} - @yield('title')</title>
+    <title>{{ config('app.name', 'Laravel') }} - @yield('title', 'Admin Panel')</title>
 
     <!-- Fonts -->
-    <link href="https://fonts.bunny.net/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-    <!-- Styles -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    {{-- Add your custom css files here --}}
-    {{-- <link href="{{ asset('css/app.css') }}" rel="stylesheet"> --}}
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
-    @stack('styles')
+    <!-- Vite Assets -->
+    @vite(['resources/sass/admin_panel.scss', 'resources/js/admin_panel.js'])
 
 </head>
-<body class="antialiased">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url('/') }}">{{ config('app.name', 'Laravel') }}</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="{{ url('/') }}">Home</a>
-                    </li>
-                    {{-- Add more navigation links here --}}
-                </ul>
+<body class="font-sans antialiased">
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="#" class="logo">
+                    <span class="logo-icon"><i class="fas fa-cogs"></i></span>
+                    <span class="logo-text">ControleObras</span>
+                </a>
+                <button class="toggle-btn" id="toggleSidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
-        </div>
-    </nav>
 
-    <div class="container mt-4">
-        @yield('content')
+            <nav class="nav-menu">
+                <div class="nav-section">
+                    <span class="nav-section-title">Principal</span>
+                    <div class="nav-item">
+                        <a href="#dashboard" class="nav-link active" data-route="dashboard">
+                            <span class="nav-icon"><i class="fas fa-tachometer-alt"></i></span>
+                            <span class="nav-text">Dashboard</span>
+                        </a>
+                        <span class="tooltip">Dashboard</span>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#analytics" class="nav-link" data-route="analytics">
+                            <span class="nav-icon"><i class="fas fa-chart-bar"></i></span>
+                            <span class="nav-text">Relatórios</span>
+                        </a>
+                        <span class="tooltip">Relatórios</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <span class="nav-section-title">Gerenciamento</span>
+                    <div class="nav-item">
+                        <a href="#clientes" class="nav-link" data-route="clientes">
+                            <span class="nav-icon"><i class="fas fa-users"></i></span>
+                            <span class="nav-text">Clientes</span>
+                        </a>
+                        <span class="tooltip">Clientes</span>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#obras" class="nav-link" data-route="obras">
+                            <span class="nav-icon"><i class="fas fa-building"></i></span>
+                            <span class="nav-text">Obras</span>
+                        </a>
+                        <span class="tooltip">Obras</span>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#gastos" class="nav-link" data-route="gastos">
+                            <span class="nav-icon"><i class="fas fa-receipt"></i></span>
+                            <span class="nav-text">Controle de Gastos</span>
+                        </a>
+                        <span class="tooltip">Controle de Gastos</span>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#financeiro" class="nav-link" data-route="financeiro">
+                            <span class="nav-icon"><i class="fas fa-dollar-sign"></i></span>
+                            <span class="nav-text">Financeiro</span>
+                        </a>
+                        <span class="tooltip">Financeiro</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <span class="nav-section-title">Configurações</span>
+                    <div class="nav-item">
+                        <a href="#categorias" class="nav-link" data-route="categorias">
+                            <span class="nav-icon"><i class="fas fa-tags"></i></span>
+                            <span class="nav-text">Categorias de Gasto</span>
+                        </a>
+                        <span class="tooltip">Categorias de Gasto</span>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#fontes" class="nav-link" data-route="fontes">
+                            <span class="nav-icon"><i class="fas fa-credit-card"></i></span>
+                            <span class="nav-text">Fontes Pagadoras</span>
+                        </a>
+                        <span class="tooltip">Fontes Pagadoras</span>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#usuarios" class="nav-link" data-route="usuarios">
+                            <span class="nav-icon"><i class="fas fa-user-cog"></i></span>
+                            <span class="nav-text">Usuários</span>
+                        </a>
+                        <span class="tooltip">Usuários</span>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#configuracoes" class="nav-link" data-route="configuracoes">
+                            <span class="nav-icon"><i class="fas fa-cog"></i></span>
+                            <span class="nav-text">Configurações</span>
+                        </a>
+                        <span class="tooltip">Configurações</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <span class="nav-section-title">Sistema</span>
+                    <div class="nav-item">
+                        <a href="#backup" class="nav-link" data-route="backup">
+                            <span class="nav-icon"><i class="fas fa-download"></i></span>
+                            <span class="nav-text">Backup</span>
+                        </a>
+                        <span class="tooltip">Backup</span>
+                    </div>
+                    <div class="nav-item">
+                        <a href="#logs" class="nav-link" data-route="logs">
+                            <span class="nav-icon"><i class="fas fa-file-alt"></i></span>
+                            <span class="nav-text">Logs</span>
+                        </a>
+                        <span class="tooltip">Logs</span>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="main-header">
+                <div class="header-info">
+                    <h1 class="header-title" id="pageTitle">Dashboard</h1>
+                    <p class="header-subtitle" id="pageSubtitle">Visão geral do sistema e métricas principais</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary">
+                        <i class="fas fa-bell"></i>
+                        <span>Notificações</span>
+                    </button>
+                    <button class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                        <span>Nova Obra</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="main-body">
+                @yield('content')
+            </div>
+        </main>
     </div>
-
-    <footer class="footer mt-auto py-3 bg-light fixed-bottom">
-        <div class="container text-center">
-            <span class="text-muted">© {{ date('Y') }} {{ config('app.name', 'Laravel') }}. All rights reserved.</span>
-        </div>
-    </footer>
-
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    {{-- Add your custom js files here --}}
-    {{-- <script src="{{ asset('js/app.js') }}" defer></script> --}}
-    @stack('scripts')
 </body>
 </html>
