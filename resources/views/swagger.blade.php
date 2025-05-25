@@ -13,6 +13,7 @@
 <div style="padding: 16px 0; text-align: center;">
     <button id="btn-auth" type="button" style="margin: 0 8px; padding: 8px 20px; border-radius: 6px; border: 1px solid #3B82F6; background: #3B82F6; color: #fff; font-weight: 600; cursor: pointer;">Autenticação</button>
     <button id="btn-client" type="button" style="margin: 0 8px; padding: 8px 20px; border-radius: 6px; border: 1px solid #6B7280; background: #6B7280; color: #fff; font-weight: 600; cursor: pointer;">Clientes</button>
+    <button id="btn-fonte" type="button" style="margin: 0 8px; padding: 8px 20px; border-radius: 6px; border: 1px solid #6B7280; background: #6B7280; color: #fff; font-weight: 600; cursor: pointer;">Fontes Pagadoras</button>
     <button id="btn-user" type="button" style="margin: 0 8px; padding: 8px 20px; border-radius: 6px; border: 1px solid #6B7280; background: #6B7280; color: #fff; font-weight: 600; cursor: pointer;">Usuários</button>
 </div>
 <div id="swagger-ui"></div>
@@ -21,6 +22,7 @@
     const files = {
         auth: '{{ url('swagger/authentication.yaml') }}',
         client: '{{ url('swagger/client.yaml') }}',
+        fonte: '{{ url('swagger/fonte-pagadora.yaml') }}',
         user: '{{ url('swagger/user.yaml') }}'
     };
     let current = 'auth';
@@ -40,10 +42,12 @@
         // Botão ativo
         document.getElementById('btn-auth').style.background = (fileKey === 'auth') ? '#3B82F6' : '#6B7280';
         document.getElementById('btn-client').style.background = (fileKey === 'client') ? '#3B82F6' : '#6B7280';
+        document.getElementById('btn-fonte').style.background = (fileKey === 'fonte') ? '#3B82F6' : '#6B7280';
         document.getElementById('btn-user').style.background = (fileKey === 'user') ? '#3B82F6' : '#6B7280';
     }
     document.getElementById('btn-auth').onclick = () => renderSwagger('auth');
     document.getElementById('btn-client').onclick = () => renderSwagger('client');
+    document.getElementById('btn-fonte').onclick = () => renderSwagger('fonte');
     document.getElementById('btn-user').onclick = () => renderSwagger('user');
     window.onload = () => renderSwagger('auth');
 </script>

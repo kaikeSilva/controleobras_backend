@@ -1,0 +1,216 @@
+openapi: 3.0.3
+info:
+  title: Fonte Pagadora API
+  version: '1.0'
+  description: |
+    CRUD para gerenciar fontes pagadoras (origens dos recursos financeiros utilizados nas obras).
+    Permite filtrar por cliente, buscar por nome, descrição e status.
+servers:
+  - url: /api
+paths:
+  /fonte-pagadoras:
+    get:
+      summary: Lista fontes pagadoras
+      tags: [FontePagadora]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: filter[cliente_id]
+          schema:
+            type: integer
+          description: Filtrar por ID do cliente
+        - in: query
+          name: filter[nome]
+          schema:
+            type: string
+          description: Buscar por nome
+        - in: query
+          name: filter[descricao]
+          schema:
+            type: string
+          description: Buscar por descrição
+        - in: query
+          name: filter[status]
+          schema:
+            type: string
+            enum: [ativo, inativo]
+          description: Filtrar por status
+        - in: query
+          name: filter[busca]
+          schema:
+            type: string
+          description: Busca geral (nome, descrição, status)
+        - in: query
+          name: sort_by
+          schema:
+            type: string
+          description: Campo para ordenação
+        - in: query
+          name: direction
+          schema:
+            type: string
+            enum: [asc, desc]
+          description: Direção da ordenação
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+          description: Quantidade por página
+      responses:
+        '200':
+          description: Lista paginada de fontes pagadoras
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FontePagadoraPaginated'
+    post:
+      summary: Criar fonte pagadora
+      tags: [FontePagadora]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FontePagadoraInput'
+      responses:
+        '201':
+          description: Fonte pagadora criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FontePagadora'
+  /fonte-pagadoras/{id}:
+    get:
+      summary: Detalhar fonte pagadora
+      tags: [FontePagadora]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Detalhes da fonte pagadora
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FontePagadora'
+    put:
+      summary: Atualizar fonte pagadora
+      tags: [FontePagadora]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FontePagadoraInput'
+      responses:
+        '200':
+          description: Fonte pagadora atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FontePagadora'
+    delete:
+      summary: Remover (soft delete) fonte pagadora
+      tags: [FontePagadora]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Fonte pagadora removida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    FontePagadora:
+      type: object
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+        descricao:
+          type: string
+        ativo:
+          type: boolean
+        data_cadastro:
+          type: string
+          format: date-time
+        cliente_id:
+          type: integer
+        status:
+          type: string
+          enum: [ativo, inativo]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+    FontePagadoraInput:
+      type: object
+      required:
+        - nome
+        - cliente_id
+        - status
+      properties:
+        nome:
+          type: string
+        descricao:
+          type: string
+        ativo:
+          type: boolean
+        data_cadastro:
+          type: string
+          format: date-time
+        cliente_id:
+          type: integer
+        status:
+          type: string
+          enum: [ativo, inativo]
+    FontePagadoraPaginated:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/FontePagadora'
+        links:
+          type: object
+        meta:
+          type: object

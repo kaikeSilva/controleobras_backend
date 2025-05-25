@@ -91,9 +91,6 @@ Representa as origens dos recursos financeiros utilizados nos gastos.
 - `id` (PK): Identificador único
 - `nome`: Nome da fonte pagadora
 - `descricao`: Descrição detalhada
-- `tipo`: Tipo da fonte (Conta bancária, Cartão, Dinheiro, PIX, etc.)
-- `dados_bancarios`: Informações bancárias (quando aplicável)
-- `limite_credito`: Limite disponível (quando aplicável)
 - `ativo`: Status da fonte (ativa/inativa)
 - `data_cadastro`: Data de criação do registro
 

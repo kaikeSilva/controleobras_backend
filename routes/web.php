@@ -15,20 +15,20 @@ use App\Http\Controllers\HomeController;
 |
 */
 
-Route::get('/', [HomeController::class, 'index'])->name('home');
+// Route::get('/', [HomeController::class, 'index'])->name('home');
 
-Route::get('/test-form', [TestController::class, 'showTestForm'])->name('test.form');
-Route::post('/test-submit', [TestController::class, 'submitTestForm'])->name('test.submit');
-Route::get('/test-status', [TestController::class, 'getStatus'])->name('test.status');
+// Route::get('/test-form', [TestController::class, 'showTestForm'])->name('test.form');
+// Route::post('/test-submit', [TestController::class, 'submitTestForm'])->name('test.submit');
+// Route::get('/test-status', [TestController::class, 'getStatus'])->name('test.status');
 
-// WebSocket Test Routes
-Route::get('/websocket-test', [TestController::class, 'showWebSocketTest'])->name('websocket.test.show');
+// // WebSocket Test Routes
+// Route::get('/websocket-test', [TestController::class, 'showWebSocketTest'])->name('websocket.test.show');
 
 // Swagger UI
 Route::get('/swagger-ui', function () {
     return view('swagger');
 });
-Route::post('/send-websocket-test', [TestController::class, 'sendWebSocketTest'])->name('websocket.test.send');
-Route::get('/websocket-status', [TestController::class, 'getWebSocketStatus'])->name('websocket.status.get');
-Route::post('/broadcast-test-message', [TestController::class, 'broadcastTestMessage'])->name('websocket.test.message');
-Route::post('/broadcast-test-notification', [TestController::class, 'broadcastTestNotification'])->name('websocket.test.notification');
+// Route::post('/send-websocket-test', [TestController::class, 'sendWebSocketTest'])->name('websocket.test.send');
+// Route::get('/websocket-status', [TestController::class, 'getWebSocketStatus'])->name('websocket.status.get');
+// Route::post('/broadcast-test-message', [TestController::class, 'broadcastTestMessage'])->name('websocket.test.message');
+// Route::post('/broadcast-test-notification', [TestController::class, 'broadcastTestNotification'])->name('websocket.test.notification');
