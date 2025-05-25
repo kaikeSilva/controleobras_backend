@@ -14,7 +14,9 @@ Representa cada projeto de construção gerenciado pelo cliente.
 - `valor_estimado`: Valor estimado total de execução
 - `taxa_administracao`: Percentual da taxa de administração
 - `status`: Status da obra (Em andamento, Concluída, Pausada)
-- `data_cadastro`: Data de criação do registro
+- timestamps (created_at, updated_at)
+- soft delete (deleted_at)
+- status (ativo/inativo)
 
 
 # tarefa criar crud completo tendo como exemplo o CRUD de clientes:

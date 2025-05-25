@@ -1,0 +1,247 @@
+openapi: 3.0.3
+info:
+  title: Obra API
+  version: '1.0'
+  description: |
+    Endpoints para gerenciamento de obras (CRUD, filtros, busca, soft delete).
+servers:
+  - url: /api
+paths:
+  /obras:
+    get:
+      summary: Lista obras
+      tags: [Obra]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: cliente_id
+          schema:
+            type: integer
+          description: Filtrar por cliente
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Buscar por nome, descrição ou status
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [ativo, inativo]
+          description: Filtrar por status (ativo/inativo)
+        - in: query
+          name: ativo
+          schema:
+            type: boolean
+          description: Filtrar por ativo/inativo
+      responses:
+        '200':
+          description: Lista paginada de obras
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Obra'
+                  links:
+                    type: object
+                  meta:
+                    type: object
+    post:
+      summary: Criar obra
+      tags: [Obra]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ObraInput'
+      responses:
+        '201':
+          description: Obra criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Obra'
+  /obras/{id}:
+    get:
+      summary: Exibe detalhes da obra
+      tags: [Obra]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Detalhes da obra
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Obra'
+    put:
+      summary: Atualiza obra
+      tags: [Obra]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ObraInput'
+      responses:
+        '200':
+          description: Obra atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Obra'
+    delete:
+      summary: Remove (soft delete) obra
+      tags: [Obra]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Obra removida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+  /autocomplete/obras:
+    get:
+      summary: Lista obras para autocomplete
+      tags: [Autocomplete]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: cliente_id
+          schema:
+            type: integer
+          description: Filtrar obras por cliente
+      responses:
+        '200':
+          description: Lista de obras (id, nome)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AutocompleteItem'
+                  links:
+                    type: object
+                  meta:
+                    type: object
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Obra:
+      type: object
+      properties:
+        id:
+          type: integer
+        cliente_id:
+          type: integer
+        nome:
+          type: string
+        descricao:
+          type: string
+        endereco:
+          type: string
+        area_m2:
+          type: number
+          format: float
+        data_inicio:
+          type: string
+          format: date
+        prazo_estimado:
+          type: string
+          format: date
+        valor_estimado:
+          type: number
+          format: float
+        taxa_administracao:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [em_andamento, concluida, pausada]
+        ativo:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deleted_at:
+          type: string
+          format: date-time
+    ObraInput:
+      type: object
+      properties:
+        cliente_id:
+          type: integer
+        nome:
+          type: string
+        descricao:
+          type: string
+        endereco:
+          type: string
+        area_m2:
+          type: number
+        data_inicio:
+          type: string
+          format: date
+        prazo_estimado:
+          type: string
+          format: date
+        valor_estimado:
+          type: number
+        taxa_administracao:
+          type: number
+        status:
+          type: string
+          enum: [em_andamento, concluida, pausada]
+        ativo:
+          type: boolean
+    AutocompleteItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
