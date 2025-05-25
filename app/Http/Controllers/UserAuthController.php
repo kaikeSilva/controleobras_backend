@@ -13,7 +13,7 @@ class UserAuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:6|confirmed',
         ]);
 
         $user = User::create([
@@ -34,7 +34,7 @@ class UserAuthController extends Controller
     {
         $request->validate([
             'email' => 'required|string|email|max:255',
-            'password' => 'required|string|min:8',
+            'password' => 'required|string|min:6',
         ]);
 
         if (!auth()->attempt($request->only('email', 'password'))) {
