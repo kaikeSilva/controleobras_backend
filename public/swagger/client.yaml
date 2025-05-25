@@ -1,0 +1,211 @@
+openapi: 3.0.3
+info:
+  title: API de Clientes
+  description: API REST para CRUD de clientes usando Laravel
+  version: 1.0.0
+servers:
+  - url: http://localhost/api
+paths:
+  /clients:
+    get:
+      summary: Lista clientes
+      tags:
+        - Clientes
+      parameters:
+        - in: query
+          name: filter[busca]
+          schema:
+            type: string
+          description: Busca geral por nome, email, telefone ou endereço
+        - in: query
+          name: filter[name]
+          schema:
+            type: string
+          description: Filtra por nome
+        - in: query
+          name: filter[email]
+          schema:
+            type: string
+          description: Filtra por email
+        - in: query
+          name: filter[phone]
+          schema:
+            type: string
+          description: Filtra por telefone
+        - in: query
+          name: filter[address]
+          schema:
+            type: string
+          description: Filtra por endereço
+        - in: query
+          name: sort_by
+          schema:
+            type: string
+            enum: [id, name, email, phone, address, created_at, updated_at]
+          description: Campo para ordenação
+        - in: query
+          name: direction
+          schema:
+            type: string
+            enum: [asc, desc]
+          description: Direção da ordenação
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+          description: Itens por página
+      responses:
+        '200':
+          description: Lista paginada de clientes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientPaginatedResponse'
+    post:
+      summary: Cria um novo cliente
+      tags:
+        - Clientes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientRequest'
+      responses:
+        '201':
+          description: Cliente criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '422':
+          description: Dados inválidos
+  /clients/{id}:
+    get:
+      summary: Busca cliente por ID
+      tags:
+        - Clientes
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Cliente encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '404':
+          description: Cliente não encontrado
+    put:
+      summary: Atualiza cliente
+      tags:
+        - Clientes
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientRequest'
+      responses:
+        '200':
+          description: Cliente atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '422':
+          description: Dados inválidos
+        '404':
+          description: Cliente não encontrado
+    delete:
+      summary: Remove um cliente
+      tags:
+        - Clientes
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID do cliente
+      responses:
+        '204':
+          description: Cliente removido com sucesso
+        '404':
+          description: Cliente não encontrado
+components:
+  schemas:
+    Client:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: João Silva
+        email:
+          type: string
+          example: joao@exemplo.com
+        phone:
+          type: string
+          nullable: true
+          example: '+55 11 99999-0000'
+        address:
+          type: string
+          nullable: true
+          example: 'Rua das Flores, 123'
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-05-23T15:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2025-05-23T15:00:00Z'
+    ClientRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: João Silva
+        email:
+          type: string
+          example: joao@exemplo.com
+        phone:
+          type: string
+          example: '+55 11 99999-0000'
+        address:
+          type: string
+          example: 'Rua das Flores, 123'
+      required:
+        - name
+        - email
+    ClientPaginatedResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Client'
+        meta:
+          type: object
+          properties:
+            current_page:
+              type: integer
+            last_page:
+              type: integer
+            per_page:
+              type: integer
+            total:
+              type: integer

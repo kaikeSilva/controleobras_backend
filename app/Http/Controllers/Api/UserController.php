@@ -4,17 +4,18 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Client;
-use App\Http\Resources\ClientResource;
+use App\Models\User;
+use App\Http\Resources\UserResource;
+use Illuminate\Support\Facades\Hash;
 
-class ClientController extends Controller
+class UserController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $query = Client::query();
+        $query = User::query();
 
         // Filtros
         if ($request->has('filter')) {
@@ -26,7 +27,7 @@ class ClientController extends Controller
             }
 
             // Filtro geral 'busca' (LIKE em todos os campos string)
-            $stringFields = ['name', 'email', 'phone', 'address'];
+            $stringFields = ['name', 'email'];
             if (!empty($filters['busca'])) {
                 $query->where(function($q) use ($filters, $stringFields) {
                     foreach ($stringFields as $field) {
@@ -54,7 +55,7 @@ class ClientController extends Controller
         // Ordenação
         $sortBy = $request->input('sort_by', 'id');
         $direction = $request->input('direction', 'asc');
-        $allowedSortFields = ['id', 'name', 'email', 'phone', 'address', 'created_at', 'updated_at'];
+        $allowedSortFields = ['id', 'name', 'email', 'created_at', 'updated_at'];
         $allowedDirections = ['asc', 'desc'];
         if (in_array($sortBy, $allowedSortFields) && in_array($direction, $allowedDirections)) {
             $query->orderBy($sortBy, $direction);
@@ -62,9 +63,9 @@ class ClientController extends Controller
 
         // Paginação
         $perPage = (int) $request->input('per_page', 15);
-        $clients = $query->paginate($perPage);
+        $users = $query->paginate($perPage);
 
-        return ClientResource::collection($clients);
+        return UserResource::collection($users);
     }
 
     /**
@@ -74,43 +75,50 @@ class ClientController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:clients,email',
-            'phone' => 'nullable|string|max:20',
-            'address' => 'nullable|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:6',
         ]);
-        $client = Client::create($validated);
-        return (new ClientResource($client))->response()->setStatusCode(201);
+        $validated['password'] = Hash::make($validated['password']);
+        $user = User::create($validated);
+        return new UserResource($user);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Client $client)
+    public function show($id)
     {
-        return new ClientResource($client);
+        $user = User::findOrFail($id);
+        return new UserResource($user);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Client $client)
+    public function update(Request $request, $id)
     {
+        $user = User::findOrFail($id);
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|email|unique:clients,email,' . $client->id,
-            'phone' => 'nullable|string|max:20',
-            'address' => 'nullable|string|max:255',
+            'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:6',
         ]);
-        $client->update($validated);
-        return new ClientResource($client);
+        if (!empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
+        $user->update($validated);
+        return new UserResource($user);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Client $client)
+    public function destroy($id)
     {
-        $client->delete();
-        return response()->json(null, 204);
+        $user = User::findOrFail($id);
+        $user->delete();
+        return response()->json(['message' => 'Usuário excluído com sucesso.']);
     }
 }

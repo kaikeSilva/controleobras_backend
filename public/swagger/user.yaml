@@ -1,0 +1,198 @@
+openapi: 3.0.3
+info:
+  title: API Usuários
+  version: '1.0'
+  description: Documentação das rotas de CRUD de usuários
+servers:
+  - url: http://localhost/api
+paths:
+  /users:
+    get:
+      summary: Lista usuários
+      tags:
+        - Usuários
+      parameters:
+        - in: query
+          name: filter[busca]
+          schema:
+            type: string
+          description: Busca geral por nome ou email
+        - in: query
+          name: filter[name]
+          schema:
+            type: string
+          description: Filtra por nome
+        - in: query
+          name: filter[email]
+          schema:
+            type: string
+          description: Filtra por email
+        - in: query
+          name: sort_by
+          schema:
+            type: string
+            enum: [id, name, email, created_at, updated_at]
+          description: Campo para ordenação
+        - in: query
+          name: direction
+          schema:
+            type: string
+            enum: [asc, desc]
+          description: Direção da ordenação
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+          description: Itens por página
+      responses:
+        '200':
+          description: Lista paginada de usuários
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPaginatedResponse'
+    post:
+      summary: Cria um novo usuário
+      tags:
+        - Usuários
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+      responses:
+        '201':
+          description: Usuário criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '422':
+          description: Dados inválidos
+  /users/{id}:
+    get:
+      summary: Busca usuário por ID
+      tags:
+        - Usuários
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Usuário encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          description: Usuário não encontrado
+    put:
+      summary: Atualiza usuário
+      tags:
+        - Usuários
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      responses:
+        '200':
+          description: Usuário atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '422':
+          description: Dados inválidos
+        '404':
+          description: Usuário não encontrado
+    delete:
+      summary: Remove usuário
+      tags:
+        - Usuários
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Usuário removido
+        '404':
+          description: Usuário não encontrado
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    UserResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/User'
+    UserPaginatedResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        meta:
+          type: object
+          properties:
+            current_page:
+              type: integer
+            last_page:
+              type: integer
+            per_page:
+              type: integer
+            total:
+              type: integer
+    UserCreateRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+          format: password
+    UserUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+          format: password

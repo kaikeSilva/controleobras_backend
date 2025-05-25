@@ -25,7 +25,7 @@ Route::get('/test-status', [TestController::class, 'getStatus'])->name('test.sta
 Route::get('/websocket-test', [TestController::class, 'showWebSocketTest'])->name('websocket.test.show');
 
 // Swagger UI
-Route::get('/swagger', function () {
+Route::get('/swagger-ui', function () {
     return view('swagger');
 });
 Route::post('/send-websocket-test', [TestController::class, 'sendWebSocketTest'])->name('websocket.test.send');
