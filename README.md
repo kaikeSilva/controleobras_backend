@@ -56,6 +56,89 @@ In order to ensure that the Laravel community is welcoming to all, please review
 
 If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
+## API - Filtros, Ordenação e Paginação
+
+Todas as rotas de listagem da API (ex: `/api/clients`) seguem o mesmo padrão para filtros, ordenação e paginação.
+
+### Filtros
+Envie filtros usando o parâmetro `filter` na query string. Exemplos:
+
+- Buscar por nome:
+  ```http
+  GET /api/clients?filter[name]=João
+  ```
+- Buscar por email exato:
+  ```http
+  GET /api/clients?filter[email]=joao@email.com
+  ```
+- Buscar por telefone contendo "99":
+  ```http
+  GET /api/clients?filter[phone]=99
+  ```
+- Buscar por data de criação:
+  ```http
+  GET /api/clients?filter[created_at]=2025-05-25
+  ```
+- Buscar por id exato:
+  ```http
+  GET /api/clients?filter[id]=10
+  ```
+
+### Ordenação
+Envie os parâmetros `sort_by` e `direction`:
+
+- Ordenar por nome crescente:
+  ```http
+  GET /api/clients?sort_by=name&direction=asc
+  ```
+- Ordenar por data de criação decrescente:
+  ```http
+  GET /api/clients?sort_by=created_at&direction=desc
+  ```
+
+Campos permitidos para ordenação: `id`, `name`, `email`, `phone`, `address`, `created_at`, `updated_at`.
+
+### Paginação
+Envie o parâmetro `per_page` para definir o número de itens por página (padrão: 15):
+
+- 30 itens por página:
+  ```http
+  GET /api/clients?per_page=30
+  ```
+
+A resposta segue o padrão de paginação do Laravel, incluindo informações de links e meta dados.
+
+#### Como acessar a próxima página
+
+A resposta da API inclui um objeto `links` com a URL da próxima página em `links.next`.
+
+Exemplo de resposta:
+```json
+{
+  "data": [ ... ],
+  "links": {
+    "first": "http://localhost/api/clients?page=1",
+    "last": "http://localhost/api/clients?page=10",
+    "prev": null,
+    "next": "http://localhost/api/clients?page=2"
+  },
+  "meta": {
+    "current_page": 1,
+    "from": 1,
+    "last_page": 10,
+    ...
+  }
+}
+```
+
+Para buscar a próxima página, basta acessar a URL indicada em `links.next` ou enviar o parâmetro `page` na query string:
+
+```http
+GET /api/clients?page=2
+```
+
+---
+
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

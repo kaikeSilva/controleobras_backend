@@ -5,15 +5,57 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Client;
+use App\Http\Resources\ClientResource;
 
 class ClientController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Client::all());
+        $query = Client::query();
+
+        // Filtros
+        if ($request->has('filter')) {
+            $filters = $request->input('filter');
+
+            // Filtro por ID (exato)
+            if (!empty($filters['id'])) {
+                $query->where('id', $filters['id']);
+            }
+
+            // Filtros por string (LIKE)
+            $stringFields = ['name', 'email', 'phone', 'address'];
+            foreach ($stringFields as $field) {
+                if (!empty($filters[$field])) {
+                    $query->where($field, 'LIKE', '%' . $filters[$field] . '%');
+                }
+            }
+
+            // Filtros por data
+            $dateFields = ['created_at', 'updated_at'];
+            foreach ($dateFields as $field) {
+                if (!empty($filters[$field])) {
+                    $query->whereDate($field, $filters[$field]);
+                }
+            }
+        }
+
+        // Ordenação
+        $sortBy = $request->input('sort_by', 'id');
+        $direction = $request->input('direction', 'asc');
+        $allowedSortFields = ['id', 'name', 'email', 'phone', 'address', 'created_at', 'updated_at'];
+        $allowedDirections = ['asc', 'desc'];
+        if (in_array($sortBy, $allowedSortFields) && in_array($direction, $allowedDirections)) {
+            $query->orderBy($sortBy, $direction);
+        }
+
+        // Paginação
+        $perPage = (int) $request->input('per_page', 15);
+        $clients = $query->paginate($perPage);
+
+        return ClientResource::collection($clients);
     }
 
     /**
@@ -28,7 +70,7 @@ class ClientController extends Controller
             'address' => 'nullable|string|max:255',
         ]);
         $client = Client::create($validated);
-        return response()->json($client, 201);
+        return (new ClientResource($client))->response()->setStatusCode(201);
     }
 
     /**
@@ -36,7 +78,7 @@ class ClientController extends Controller
      */
     public function show(Client $client)
     {
-        return response()->json($client);
+        return new ClientResource($client);
     }
 
     /**
@@ -51,7 +93,7 @@ class ClientController extends Controller
             'address' => 'nullable|string|max:255',
         ]);
         $client->update($validated);
-        return response()->json($client);
+        return new ClientResource($client);
     }
 
     /**
