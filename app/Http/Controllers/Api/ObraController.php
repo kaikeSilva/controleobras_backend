@@ -16,7 +16,7 @@ class ObraController extends Controller
      */
     public function index()
     {
-        $query = Obra::with('cliente')->query();
+        $query = Obra::query();
         // Filtros
         if (request()->has('filter')) {
             $filters = request()->input('filter');
