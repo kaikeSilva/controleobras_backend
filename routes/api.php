@@ -9,6 +9,7 @@ use App\Http\Controllers\UserAuthController;
 
 Route::apiResource('clients', ClientController::class)->middleware('auth:sanctum');
 Route::apiResource('fonte-pagadoras', FontePagadoraController::class)->middleware('auth:sanctum');
+Route::get('autocomplete/fontes-pagadoras', [\App\Http\Controllers\Api\AutocompleteController::class, 'fontesPagadoras'])->middleware('auth:sanctum');
 Route::apiResource('users', UserController::class)->middleware('auth:sanctum');
 Route::post('/login', [UserAuthController::class, 'login']);
 Route::post('register',[UserAuthController::class,'register']);

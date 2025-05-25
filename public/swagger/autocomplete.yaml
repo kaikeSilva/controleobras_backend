@@ -1,0 +1,45 @@
+openapi: 3.0.3
+info:
+  title: Autocomplete API
+  version: '1.0'
+  description: |
+    Endpoints para autocomplete/selects de entidades do sistema. Retorna apenas os campos essenciais para preenchimento de selects.
+servers:
+  - url: /api
+paths:
+  /autocomplete/fontes-pagadoras:
+    get:
+      summary: Lista de fontes pagadoras para autocomplete
+      tags: [Autocomplete]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de fontes pagadoras (id, nome)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AutocompleteItem'
+                  links:
+                    type: object
+                  meta:
+                    type: object
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    AutocompleteItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string

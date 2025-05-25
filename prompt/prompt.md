@@ -1,17 +1,21 @@
 
-Implemente o CRUD da model Fonte Pagadora.
-Representa as origens dos recursos financeiros utilizados nos gastos de uma obra. clientes podem criar fontes pagadoras para utilizar nas suas obras.
+Implemente o CRUD da model Obra.
+Representa cada projeto de construção gerenciado pelo cliente.
 
 **Atributos:**
 - `id` (PK): Identificador único
-- `nome`: Nome da fonte pagadora
-- `descricao`: Descrição detalhada
-- `ativo`: Status da fonte (ativa/inativa)
-- `data_cadastro`: Data de criação do registro
 - `cliente_id` (FK): Referência ao cliente proprietário
-- timestamps (created_at, updated_at)
-- soft delete (deleted_at)
-- status (ativo/inativo)
+- `nome`: Nome da obra
+- `descricao`: Descrição detalhada
+- `endereco`: Localização da obra
+- `area_m2`: Área em metros quadrados
+- `data_inicio`: Data de início da obra
+- `prazo_estimado`: Prazo estimado de conclusão
+- `valor_estimado`: Valor estimado total de execução
+- `taxa_administracao`: Percentual da taxa de administração
+- `status`: Status da obra (Em andamento, Concluída, Pausada)
+- `data_cadastro`: Data de criação do registro
+
 
 # tarefa criar crud completo tendo como exemplo o CRUD de clientes:
  - Resource
@@ -20,5 +24,7 @@ Representa as origens dos recursos financeiros utilizados nos gastos de uma obra
  - Migration
  - Factory
  - Seeder
+ - documentacao no na pasta do swagger e na view do swagger
+ - Rota no autocomplete para obras com filtragem por cliente
 
-- deve ser possivel filtrar as fontes pagadoras por cliente, search por nome/descricao/status
+- deve ser possivel filtrar as obras por cliente, search por nome/descricao/status
