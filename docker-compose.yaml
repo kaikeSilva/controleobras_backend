@@ -22,6 +22,8 @@ services:
     depends_on:
       - db
       - redis
+      - node
+      - websocket
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "pgrep", "-f", "artisan serve"]
@@ -92,7 +94,7 @@ services:
     volumes:
       - redis_data:/data
     restart: unless-stopped
-    command: redis-server --requirepass ${DB_PASSWORD}
+    command: ["redis-server", "--requirepass", "${DB_PASSWORD}"]
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${DB_PASSWORD}", "ping"]
       interval: 10s
