@@ -14,6 +14,7 @@ class AutocompleteResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // verify if class has atribute nome
         return [
             'id' => $this->id,
             'nome' => $this->nome,

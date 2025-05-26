@@ -12,4 +12,10 @@ class Client extends Model
         'phone',
         'address',
     ];
+
+    // create atribute nome
+    public function getNomeAttribute()
+    {
+        return $this->name;
+    }
 }

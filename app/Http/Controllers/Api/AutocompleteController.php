@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 
 use App\Models\FontePagadora;
 use App\Models\Obra;
+use App\Models\Client;
 use App\Http\Resources\AutocompleteResource;
 
 class AutocompleteController extends Controller
@@ -40,5 +41,24 @@ class AutocompleteController extends Controller
         }
         $obras = $query->orderBy('nome')->get();
         return AutocompleteResource::collection($obras);
+    }
+
+    /**
+     * Retorna lista de clientes para autocomplete/select.
+     */
+    public function clientes()
+    {
+        $query = Client::query();
+
+        if (request()->has('search')) {
+            $search = request('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('email', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $clientes = $query->orderBy('name')->get();
+        return AutocompleteResource::collection($clientes);
     }
 }

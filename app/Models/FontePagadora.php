@@ -24,4 +24,5 @@ class FontePagadora extends Model
     protected $casts = [
         'data_cadastro' => 'datetime',
     ];
+    
 }
