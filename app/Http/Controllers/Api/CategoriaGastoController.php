@@ -83,7 +83,16 @@ class CategoriaGastoController extends Controller
             'status' => 'sometimes|boolean',
             'cliente_id' => 'nullable|exists:clients,id',
             'descricao' => 'nullable|string',
-            'cor' => 'nullable|string|regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
+            'cor' => ['nullable', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
+        ], [
+            'nome.required' => 'O campo nome é obrigatório.',
+            'nome.string' => 'O nome deve ser um texto.',
+            'nome.max' => 'O nome não pode ter mais de 255 caracteres.',
+            'nome.unique' => 'Já existe uma categoria com este nome.',
+            'status.boolean' => 'O status deve ser verdadeiro ou falso.',
+            'cliente_id.exists' => 'O cliente selecionado não foi encontrado.',
+            'descricao.string' => 'A descrição deve ser um texto.',
+            'cor.regex' => 'A cor deve estar no formato hexadecimal (ex: #FFFFFF ou #FFF).',
         ]);
 
         // Gera o slug a partir do nome
@@ -110,32 +119,63 @@ class CategoriaGastoController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(CategoriaGasto $categoriaGasto)
+    public function show($id)
     {
-        return new CategoriaGastoResource($categoriaGasto->load('cliente'));
+        $categoria = CategoriaGasto::with('cliente')->find($id);
+        
+        if (!$categoria) {
+            return response()->json([
+                'message' => 'Categoria de gasto não encontrada.',
+                'errors' => [
+                    'id' => ['A categoria de gasto com o ID informado não foi encontrada.']
+                ]
+            ], 404);
+        }
+        
+        return new CategoriaGastoResource($categoria);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, CategoriaGasto $categoriaGasto)
+    public function update(Request $request, $id)
     {
+        $categoria = CategoriaGasto::with('cliente')->find($id);
+        
+        if (!$categoria) {
+            return response()->json([
+                'message' => 'Categoria de gasto não encontrada.',
+                'errors' => [
+                    'id' => ['A categoria de gasto com o ID informado não foi encontrada.']
+                ]
+            ], 404);
+        }
+
         $validated = $request->validate([
-            'nome' => 'sometimes|required|string|max:255|unique:categoria_gastos,nome,' . $categoriaGasto->id,
+            'nome' => 'sometimes|required|string|max:255|unique:categoria_gastos,nome,' . $id,
             'status' => 'sometimes|boolean',
             'cliente_id' => 'nullable|exists:clients,id',
             'descricao' => 'nullable|string',
             'cor' => 'nullable|string|regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
+        ], [
+            'nome.required' => 'O campo nome é obrigatório.',
+            'nome.string' => 'O nome deve ser um texto.',
+            'nome.max' => 'O nome não pode ter mais de 255 caracteres.',
+            'nome.unique' => 'Já existe uma categoria com este nome.',
+            'status.boolean' => 'O status deve ser verdadeiro ou falso.',
+            'cliente_id.exists' => 'O cliente selecionado não foi encontrado.',
+            'descricao.string' => 'A descrição deve ser um texto.',
+            'cor.regex' => 'A cor deve estar no formato hexadecimal (ex: #FFFFFF ou #FFF).',
         ]);
 
         // Se o nome foi alterado, atualiza o slug
-        if (isset($validated['nome']) && $validated['nome'] !== $categoriaGasto->nome) {
+        if (isset($validated['nome']) && $validated['nome'] !== $categoria->nome) {
             $validated['slug'] = Str::slug($validated['nome']);
             
             // Verifica se já existe outra categoria com o mesmo slug para o mesmo cliente
             $existing = CategoriaGasto::where('slug', $validated['slug'])
-                ->where('id', '!=', $categoriaGasto->id)
-                ->where('cliente_id', $validated['cliente_id'] ?? $categoriaGasto->cliente_id)
+                ->where('id', '!=', $id)
+                ->where('cliente_id', $validated['cliente_id'] ?? $categoria->cliente_id)
                 ->exists();
 
             if ($existing) {
@@ -148,16 +188,36 @@ class CategoriaGastoController extends Controller
             }
         }
 
-        $categoriaGasto->update($validated);
-        return new CategoriaGastoResource($categoriaGasto->load('cliente'));
+        $categoria->update($validated);
+        return new CategoriaGastoResource($categoria);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(CategoriaGasto $categoriaGasto)
+    public function destroy($id)
     {
-        $categoriaGasto->delete();
+        $categoria = CategoriaGasto::withTrashed()->find($id);
+        
+        if (!$categoria) {
+            return response()->json([
+                'message' => 'Categoria de gasto não encontrada.',
+                'errors' => [
+                    'id' => ['A categoria de gasto com o ID informado não foi encontrada.']
+                ]
+            ], 404);
+        }
+        
+        if ($categoria->trashed()) {
+            return response()->json([
+                'message' => 'Categoria de gasto não encontrada.',
+                'errors' => [
+                    'id' => ['Esta categoria de gasto já foi excluída.']
+                ]
+            ], 404);
+        }
+        
+        $categoria->delete();
         return response()->json(null, 204);
     }
 }

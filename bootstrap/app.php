@@ -16,5 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Registra o manipulador personalizado para exceções
+        $exceptions->reportable(function (\Throwable $e) {
+            //
+        });
     })->create();
