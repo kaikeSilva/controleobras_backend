@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\FontePagadora;
 use App\Models\Obra;
 use App\Models\Client;
+use App\Models\CategoriaGasto;
 use App\Http\Resources\AutocompleteResource;
 
 class AutocompleteController extends Controller
@@ -60,5 +61,33 @@ class AutocompleteController extends Controller
 
         $clientes = $query->orderBy('name')->get();
         return AutocompleteResource::collection($clientes);
+    }
+
+    /**
+     * Retorna lista de categorias de gastos para autocomplete/select.
+     */
+    public function categoriasGastos()
+    {
+        $query = CategoriaGasto::query()
+            ->where('status', true)
+            ->orderBy('nome');
+
+        if (request()->has('cliente_id')) {
+            $query->where(function($q) {
+                $q->where('cliente_id', request('cliente_id'))
+                  ->orWhereNull('cliente_id');
+            });
+        }
+
+        if (request()->has('search')) {
+            $search = request('search');
+            $query->where(function($q) use ($search) {
+                $q->where('nome', 'LIKE', "%{$search}%")
+                  ->orWhere('descricao', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $categorias = $query->orderBy('nome')->get();
+        return AutocompleteResource::collection($categorias);
     }
 }

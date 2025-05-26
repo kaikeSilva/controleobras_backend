@@ -1,0 +1,322 @@
+openapi: 3.0.0
+info:
+  title: Categoria de Gastos API
+  description: API para gerenciamento de categorias de gastos
+  version: 1.0.0
+
+paths:
+  /api/categorias-gastos:
+    get:
+      tags:
+        - Categorias de Gastos
+      summary: Lista todas as categorias de gastos
+      description: Retorna uma lista paginada de categorias de gastos, com opções de filtro e ordenação.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/sort_by'
+        - $ref: '#/components/parameters/direction'
+        - in: query
+          name: filter[cliente_id]
+          schema:
+            type: integer
+          description: Filtrar por ID do cliente
+        - in: query
+          name: filter[status]
+          schema:
+            type: boolean
+          description: Filtrar por status (true/false)
+        - in: query
+          name: filter[busca]
+          schema:
+            type: string
+          description: Busca textual nos campos nome e descrição
+      responses:
+        '200':
+          description: Lista de categorias de gastos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CategoriaGasto'
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+    post:
+      tags:
+        - Categorias de Gastos
+      summary: Cria uma nova categoria de gasto
+      description: Cria uma nova categoria de gasto com os dados fornecidos.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoriaGastoInput'
+      responses:
+        '201':
+          description: Categoria de gasto criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoriaGasto'
+        '422':
+          description: Erro de validação
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /api/categorias-gastos/{id}:
+    get:
+      tags:
+        - Categorias de Gastos
+      summary: Obtém os detalhes de uma categoria de gasto
+      description: Retorna os detalhes de uma categoria de gasto específica.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id_path'
+      responses:
+        '200':
+          description: Detalhes da categoria de gasto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoriaGasto'
+        '404':
+          description: Categoria de gasto não encontrada
+
+    put:
+      tags:
+        - Categorias de Gastos
+      summary: Atualiza uma categoria de gasto
+      description: Atualiza os dados de uma categoria de gasto existente.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id_path'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoriaGastoInput'
+      responses:
+        '200':
+          description: Categoria de gasto atualizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoriaGasto'
+        '404':
+          description: Categoria de gasto não encontrada
+        '422':
+          description: Erro de validação
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+    delete:
+      tags:
+        - Categorias de Gastos
+      summary: Remove uma categoria de gasto
+      description: Remove permanentemente uma categoria de gasto do sistema.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/id_path'
+      responses:
+        '204':
+          description: Categoria de gasto removida com sucesso
+        '404':
+          description: Categoria de gasto não encontrada
+
+  /api/autocomplete/categorias-gastos:
+    get:
+      tags:
+        - Autocomplete
+      summary: Busca categorias de gastos para autocomplete
+      description: Retorna uma lista de categorias de gastos para uso em campos de autocomplete.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Texto para busca nos campos nome e descrição
+        - in: query
+          name: cliente_id
+          schema:
+            type: integer
+          description: Filtrar por ID do cliente (inclui categorias sem cliente específico)
+      responses:
+        '200':
+          description: Lista de categorias de gastos para autocomplete
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AutocompleteItem'
+
+components:
+  schemas:
+    CategoriaGasto:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        nome:
+          type: string
+          example: "Material de construção"
+        slug:
+          type: string
+          example: "material-de-construcao"
+        status:
+          type: boolean
+          example: true
+        cliente_id:
+          type: integer
+          nullable: true
+          example: 1
+        cliente:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+              example: 1
+            nome:
+              type: string
+              example: "João da Silva"
+        descricao:
+          type: string
+          nullable: true
+          example: "Materiais básicos de construção"
+        cor:
+          type: string
+          nullable: true
+          example: "#e74c3c"
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-05-26T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2023-05-26T10:00:00Z"
+
+    CategoriaGastoInput:
+      type: object
+      required:
+        - nome
+      properties:
+        nome:
+          type: string
+          example: "Material de construção"
+          minLength: 3
+          maxLength: 255
+        status:
+          type: boolean
+          example: true
+        cliente_id:
+          type: integer
+          nullable: true
+          example: 1
+        descricao:
+          type: string
+          nullable: true
+          example: "Materiais básicos de construção"
+        cor:
+          type: string
+          nullable: true
+          example: "#e74c3c"
+          pattern: '^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'
+
+    ValidationError:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "O campo nome já está sendo utilizado."
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            nome: ["O campo nome já está sendo utilizado."]
+
+    AutocompleteItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        nome:
+          type: string
+          example: "Material de construção"
+
+  parameters:
+    id_path:
+      name: id
+      in: path
+      description: ID da categoria de gasto
+      required: true
+      schema:
+        type: integer
+    per_page:
+      name: per_page
+      in: query
+      description: Número de itens por página
+      required: false
+      schema:
+        type: integer
+        default: 15
+    page:
+      name: page
+      in: query
+      description: Número da página
+      required: false
+      schema:
+        type: integer
+        default: 1
+    sort_by:
+      name: sort_by
+      in: query
+      description: Campo para ordenação
+      required: false
+      schema:
+        type: string
+        default: nome
+        enum: [id, nome, status, cliente_id, created_at, updated_at]
+    direction:
+      name: direction
+      in: query
+      description: Direção da ordenação
+      required: false
+      schema:
+        type: string
+        default: asc
+        enum: [asc, desc]
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

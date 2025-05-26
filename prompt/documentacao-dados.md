@@ -65,10 +65,13 @@ Define os tipos de classificação para os gastos da obra.
 **Atributos:**
 - `id` (PK): Identificador único
 - `nome`: Nome da categoria
+- `slug`: Slug da categoria
+- `status`: Status da categoria (ativa/inativa)
+- `cliente_id`: Referência ao cliente proprietário
 - `descricao`: Descrição detalhada da categoria
 - `cor`: Cor para identificação visual (opcional)
-- `ativo`: Status da categoria (ativa/inativa)
-- `data_cadastro`: Data de criação do registro
+- `timestamps`: created_at, updated_at
+- `soft delete`: deleted_at
 
 **Exemplos de Categorias:**
 - Mão de obra
