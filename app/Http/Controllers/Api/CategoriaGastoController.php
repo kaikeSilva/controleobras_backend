@@ -168,7 +168,7 @@ class CategoriaGastoController extends Controller
             ],
             'cliente_id' => 'nullable|exists:clientes,id',
             'descricao' => 'nullable|string',
-            'cor' => 'nullable|string|regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
+            'cor' => ['nullable', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
         ], [
             'nome.required' => 'O campo nome é obrigatório.',
             'nome.string' => 'O nome deve ser um texto.',
