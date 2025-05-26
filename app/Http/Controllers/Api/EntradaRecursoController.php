@@ -36,7 +36,9 @@ class EntradaRecursoController extends Controller
                       ->orWhereHas('fontePagadora', function($q) use ($searchTerm) {
                           $q->where('nome', 'like', $searchTerm);
                       })
-                      ->orWhere('tipo_entrada', 'like', $searchTerm);
+                      ->orWhere('tipo_entrada', 'like', $searchTerm)
+                      ->orWhere('valor', 'like', $searchTerm)
+                      ->orWhere('data_entrada', 'like', $searchTerm);
                 });
             }
 
@@ -62,11 +64,27 @@ class EntradaRecursoController extends Controller
                     $filters['data_fim']
                 ]);
             }
+
+            // range de valor
+            if (isset($filters['valor_min']) && isset($filters['valor_max'])) {
+                $query->whereBetween('valor', [
+                    $filters['valor_min'], 
+                    $filters['valor_max']
+                ]);
+            }
         }
 
         // Ordenação
         $sortField = request('sort', 'data_entrada');
-        $sortDirection = request('direction', 'desc');
+        if (request('sort') === 'order_id') {
+            $sortField = 'obras.nome';
+        }
+
+        if (request('sort') === 'fonte_pagadora_id') {
+            $sortField = 'fonte_pagadoras.nome';
+        }
+
+        $sortDirection = request('order', 'desc');
         $query->orderBy($sortField, $sortDirection);
 
         return EntradaRecursoResource::collection($query->paginate($perPage));
