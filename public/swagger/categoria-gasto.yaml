@@ -26,8 +26,9 @@ paths:
         - in: query
           name: filter[status]
           schema:
-            type: boolean
-          description: Filtrar por status (true/false)
+            type: string
+            enum: [ativo, inativo]
+          description: Filtrar por status (ativo/inativo)
         - in: query
           name: filter[busca]
           schema:
@@ -187,8 +188,9 @@ components:
           type: string
           example: "material-de-construcao"
         status:
-          type: boolean
-          example: true
+          type: string
+          enum: [ativo, inativo]
+          example: "ativo"
         cliente_id:
           type: integer
           nullable: true
@@ -224,15 +226,16 @@ components:
       type: object
       required:
         - nome
+        - status
       properties:
         nome:
           type: string
           example: "Material de construção"
-          minLength: 3
-          maxLength: 255
         status:
-          type: boolean
-          example: true
+          type: string
+          enum: [ativo, inativo]
+          example: "ativo"
+          description: "Status da categoria (ativo ou inativo)"
         cliente_id:
           type: integer
           nullable: true
@@ -244,7 +247,7 @@ components:
         cor:
           type: string
           nullable: true
-          example: "#e74c3c"
+          example: "#3498db"
           pattern: '^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'
 
     ValidationError:
@@ -252,7 +255,7 @@ components:
       properties:
         message:
           type: string
-          example: "O campo nome já está sendo utilizado."
+          example: "The given data was invalid."
         errors:
           type: object
           additionalProperties:
@@ -260,7 +263,8 @@ components:
             items:
               type: string
           example:
-            nome: ["O campo nome já está sendo utilizado."]
+            nome: ["O campo nome é obrigatório."]
+            status: ["O status deve ser 'ativo' ou 'inativo'."]
 
     AutocompleteItem:
       type: object
