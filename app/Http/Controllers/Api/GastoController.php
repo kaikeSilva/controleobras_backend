@@ -12,11 +12,17 @@ class GastoController extends Controller
 {
     public function index(Request $request)
     {
+        // frontend can sent filter with the values or only the keys at the request
+        if ($request->has('filter')) {
+            $filters = $request->input('filter');
+        } else {
+            $filters = $request->all();
+        }
+        
         $query = Gasto::with(['obra', 'categoriaGasto', 'fontePagadora']);
 
         // Filtros
-        if ($request->has('filter')) {
-            $filters = $request->input('filter');
+        if ($filters) {
             $search = $filters['search'] ?? null;
 
             if ($search) {

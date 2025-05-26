@@ -119,7 +119,7 @@ class AutocompleteController extends Controller
     public function categoriasGastos()
     {
         $query = CategoriaGasto::query()
-            ->where('status', true)
+            ->where('status', CategoriaGasto::STATUS_ATIVO)
             ->orderBy('nome');
 
         if (request()->has('cliente_id')) {
