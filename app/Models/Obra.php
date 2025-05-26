@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Models\Client;
+use App\Models\Cliente;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +12,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Obra extends Model
 {
     use HasFactory, SoftDeletes;
+
+    const STATUS = [
+        'em_andamento' => 'Em Andamento',
+        'concluida' => 'Concluida',
+        'pausada' => 'Pausada',
+    ];
 
     protected $fillable = [
         'cliente_id',
@@ -39,6 +45,6 @@ class Obra extends Model
 
     public function cliente()
     {
-        return $this->belongsTo(Client::class, 'cliente_id');
+        return $this->belongsTo(Cliente::class, 'cliente_id');
     }
 }

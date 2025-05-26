@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use App\Models\Client;
+use App\Models\Cliente;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\FontePagadora>
@@ -17,7 +17,7 @@ class FontePagadoraFactory extends Factory
      */
     public function definition(): array
     {
-        $clientIds = Client::pluck('id')->toArray();
+        $clientIds = Cliente::pluck('id')->toArray();
         return [
             'nome' => $this->faker->company(),
             'descricao' => $this->faker->sentence(10),

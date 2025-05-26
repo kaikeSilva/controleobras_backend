@@ -22,12 +22,12 @@ return new class extends Migration
             $table->date('prazo_estimado')->nullable();
             $table->decimal('valor_estimado', 15, 2)->nullable();
             $table->decimal('taxa_administracao', 5, 2)->nullable();
-            $table->string('status')->default('ativo');
+            $table->enum('status', ['em_andamento', 'concluida', 'pausada'])->default('em_andamento');
             $table->boolean('ativo')->default(true);
             $table->softDeletes();
             $table->timestamps();
 
-            $table->foreign('cliente_id')->references('id')->on('clients')->onDelete('cascade');
+            $table->foreign('cliente_id')->references('id')->on('clientes')->onDelete('cascade');
         });
     }
 

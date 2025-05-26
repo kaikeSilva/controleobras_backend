@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Client;
+use App\Models\Cliente;
 use App\Http\Resources\ClientResource;
 
 class ClientController extends Controller
@@ -14,7 +14,7 @@ class ClientController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Client::query();
+        $query = Cliente::query();
 
         // Filtros
         if ($request->has('filter')) {
@@ -62,9 +62,9 @@ class ClientController extends Controller
 
         // Paginação
         $perPage = (int) $request->input('per_page', 15);
-        $clients = $query->paginate($perPage);
+        $clientes = $query->paginate($perPage);
 
-        return ClientResource::collection($clients);
+        return ClientResource::collection($clientes);
     }
 
     /**
@@ -74,18 +74,18 @@ class ClientController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:clients,email',
+            'email' => 'required|email|unique:clientes,email',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
         ]);
-        $client = Client::create($validated);
+        $client = Cliente::create($validated);
         return (new ClientResource($client))->response()->setStatusCode(201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Client $client)
+    public function show(Cliente $client)
     {
         return new ClientResource($client);
     }
@@ -93,11 +93,11 @@ class ClientController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Client $client)
+    public function update(Request $request, Cliente $client)
     {
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|email|unique:clients,email,' . $client->id,
+            'email' => 'sometimes|required|email|unique:clientes,email,' . $client->id,
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
         ]);
@@ -108,7 +108,7 @@ class ClientController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Client $client)
+    public function destroy(Cliente $client)
     {
         $client->delete();
         return response()->json(null, 204);

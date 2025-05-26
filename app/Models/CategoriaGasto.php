@@ -49,7 +49,7 @@ class CategoriaGasto extends Model
     // Relacionamentos
     public function cliente()
     {
-        return $this->belongsTo(Client::class, 'cliente_id');
+        return $this->belongsTo(Cliente::class, 'cliente_id');
     }
 
     // Escopos
@@ -84,7 +84,7 @@ class CategoriaGasto extends Model
             'nome' => ['required', 'string', 'max:255', $uniqueRule],
             'slug' => ['required', 'string', 'max:255', $uniqueRule],
             'status' => ['boolean'],
-            'cliente_id' => ['nullable', 'exists:clients,id'],
+            'cliente_id' => ['nullable', 'exists:clientes,id'],
             'descricao' => ['nullable', 'string'],
             'cor' => ['nullable', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
         ];

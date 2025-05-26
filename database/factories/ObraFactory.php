@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use App\Models\Client;
+use App\Models\Cliente;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Obra>
@@ -17,9 +17,11 @@ class ObraFactory extends Factory
      */
     public function definition(): array
     {
-        $clientIds = Client::pluck('id')->toArray();
+        // Garante que exista pelo menos um cliente
+        $client = Cliente::inRandomOrder()->first() ?? Cliente::factory()->create();
+        
         return [
-            'cliente_id' => $this->faker->randomElement($clientIds),
+            'cliente_id' => $client->id,
             'nome' => $this->faker->company(),
             'descricao' => $this->faker->sentence(12),
             'endereco' => $this->faker->address(),

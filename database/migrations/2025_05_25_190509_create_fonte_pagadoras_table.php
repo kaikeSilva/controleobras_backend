@@ -18,7 +18,7 @@ return new class extends Migration
             $table->boolean('ativo')->default(true);
             $table->timestamp('data_cadastro')->useCurrent();
             // cliente_id pode ser nulo
-            $table->foreignId('cliente_id')->nullable()->constrained('clients');
+            $table->foreignId('cliente_id')->nullable()->constrained('clientes');
             $table->timestamps();
             $table->softDeletes(); // deleted_at
             $table->enum('status', ['ativo', 'inativo'])->default('ativo');

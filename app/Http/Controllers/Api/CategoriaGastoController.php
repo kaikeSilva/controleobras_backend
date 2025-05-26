@@ -81,7 +81,7 @@ class CategoriaGastoController extends Controller
         $validated = $request->validate([
             'nome' => 'required|string|max:255|unique:categoria_gastos,nome',
             'status' => 'sometimes|boolean',
-            'cliente_id' => 'nullable|exists:clients,id',
+            'cliente_id' => 'nullable|exists:clientes,id',
             'descricao' => 'nullable|string',
             'cor' => ['nullable', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
         ], [
@@ -154,7 +154,7 @@ class CategoriaGastoController extends Controller
         $validated = $request->validate([
             'nome' => 'sometimes|required|string|max:255|unique:categoria_gastos,nome,' . $id,
             'status' => 'sometimes|boolean',
-            'cliente_id' => 'nullable|exists:clients,id',
+            'cliente_id' => 'nullable|exists:clientes,id',
             'descricao' => 'nullable|string',
             'cor' => 'nullable|string|regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
         ], [

@@ -6,7 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 use App\Models\CategoriaGasto;
-use App\Models\Client;
+use App\Models\Cliente;
 
 class CategoriaGastoSeeder extends Seeder
 {
@@ -30,14 +30,14 @@ class CategoriaGastoSeeder extends Seeder
                 ['nome' => $categoria['nome'], 'cliente_id' => null],
                 array_merge($categoria, [
                     'slug' => Str::slug($categoria['nome']),
-                    'status' => true,
+                    'status' => 'ativo',
                 ])
             );
         }
 
-        // Criar categorias aleatórias usando o Factory
+        // Criar categorias aleatórias usando o Factory         
         // Apenas se houver clientes no banco
-        if (Client::exists()) {
+        if (Cliente::exists()) {
             CategoriaGasto::factory(20)->create();
         }
     }

@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-use App\Models\Client;
+use App\Models\Cliente;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\CategoriaGasto>
@@ -68,8 +68,8 @@ class CategoriaGastoFactory extends Factory
         return [
             'nome' => $nome,
             'slug' => $slug,
-            'status' => $this->faker->boolean(90), // 90% de chance de estar ativo
-            'cliente_id' => $this->faker->optional(0.7)->randomElement(Client::pluck('id')->toArray()),
+            'status' => $this->faker->randomElement(['ativo', 'inativo']), // Valores de enum válidos
+            'cliente_id' => $this->faker->optional(0.7)->randomElement(Cliente::pluck('id')->toArray()),
             'descricao' => $this->faker->optional(0.8)->sentence(),
             'cor' => $this->faker->optional(0.7)->hexColor(),
             'created_at' => $this->faker->dateTimeBetween('-1 year', 'now'),

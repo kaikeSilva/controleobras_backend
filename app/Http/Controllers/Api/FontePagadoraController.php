@@ -73,7 +73,7 @@ class FontePagadoraController extends Controller
             'descricao' => 'nullable|string',
             'ativo' => 'boolean',
             'data_cadastro' => 'nullable|date',
-            'cliente_id' => 'required|exists:clients,id',
+            'cliente_id' => 'required|exists:clientes,id',
             'status' => 'required|in:ativo,inativo',
         ]);
         $fonte = FontePagadora::create($validated);
@@ -100,7 +100,7 @@ class FontePagadoraController extends Controller
             'descricao' => 'nullable|string',
             'ativo' => 'boolean',
             'data_cadastro' => 'nullable|date',
-            'cliente_id' => 'sometimes|required|exists:clients,id',
+            'cliente_id' => 'sometimes|required|exists:clientes,id',
             'status' => 'required|in:ativo,inativo',
         ]);
         $fonte->update($validated);

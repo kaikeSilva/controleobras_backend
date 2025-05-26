@@ -19,6 +19,7 @@
     <button id="btn-gasto" type="button" style="margin: 0 8px; padding: 8px 20px; border-radius: 6px; border: 1px solid #6B7280; background: #6B7280; color: #fff; font-weight: 600; cursor: pointer;">Gastos</button>
     <button id="btn-autocomplete" type="button" style="margin: 0 8px; padding: 8px 20px; border-radius: 6px; border: 1px solid #6B7280; background: #6B7280; color: #fff; font-weight: 600; cursor: pointer;">Autocomplete</button>
     <button id="btn-user" type="button" style="margin: 0 8px; padding: 8px 20px; border-radius: 6px; border: 1px solid #6B7280; background: #6B7280; color: #fff; font-weight: 600; cursor: pointer;">Usuários</button>
+    <button id="btn-entrada-recurso" type="button" style="margin: 0 8px; padding: 8px 20px; border-radius: 6px; border: 1px solid #6B7280; background: #6B7280; color: #fff; font-weight: 600; cursor: pointer;">Entrada de Recursos</button>
 </div>
 <div id="swagger-ui"></div>
 <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
@@ -31,7 +32,8 @@
         categoriaGasto: '{{ url('swagger/categoria-gasto.yaml') }}',
         gasto: '{{ url('swagger/gastos.yml') }}',
         autocomplete: '{{ url('swagger/autocomplete.yaml') }}',
-        user: '{{ url('swagger/user.yaml') }}'
+        user: '{{ url('swagger/user.yaml') }}',
+        entradaRecurso: '{{ url('swagger/entrada-recurso.yaml') }}'
     };
     let current = 'auth';
     function renderSwagger(fileKey) {
@@ -56,6 +58,7 @@
         document.getElementById('btn-categoria-gasto').style.background = (fileKey === 'categoriaGasto') ? '#3B82F6' : '#6B7280';
         document.getElementById('btn-autocomplete').style.background = (fileKey === 'autocomplete') ? '#3B82F6' : '#6B7280';
         document.getElementById('btn-user').style.background = (fileKey === 'user') ? '#3B82F6' : '#6B7280';
+        document.getElementById('btn-entrada-recurso').style.background = (fileKey === 'entradaRecurso') ? '#3B82F6' : '#6B7280';
     }
     document.getElementById('btn-auth').onclick = () => renderSwagger('auth');
     document.getElementById('btn-client').onclick = () => renderSwagger('client');
@@ -65,6 +68,7 @@
     document.getElementById('btn-gasto').addEventListener('click', () => renderSwagger('gasto'));
     document.getElementById('btn-autocomplete').addEventListener('click', () => renderSwagger('autocomplete'));
     document.getElementById('btn-user').onclick = () => renderSwagger('user');
+    document.getElementById('btn-entrada-recurso').onclick = () => renderSwagger('entradaRecurso');
     window.onload = () => renderSwagger('auth');
 </script>
 </body>

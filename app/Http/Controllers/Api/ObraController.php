@@ -51,7 +51,7 @@ class ObraController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'cliente_id' => 'required|exists:clients,id',
+            'cliente_id' => 'required|exists:clientes,id',
             'nome' => 'required|string|max:255',
             'descricao' => 'nullable|string',
             'endereco' => 'nullable|string|max:255',
@@ -84,7 +84,7 @@ class ObraController extends Controller
     {
         $obra = Obra::findOrFail($id);
         $validated = $request->validate([
-            'cliente_id' => 'sometimes|exists:clients,id',
+            'cliente_id' => 'sometimes|exists:clientes,id',
             'nome' => 'sometimes|string|max:255',
             'descricao' => 'nullable|string',
             'endereco' => 'nullable|string|max:255',

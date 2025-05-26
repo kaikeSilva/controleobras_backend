@@ -29,6 +29,60 @@ paths:
                     type: object
                   meta:
                     type: object
+  /autocomplete/entradas-recursos:
+    get:
+      summary: Lista de entradas de recursos para autocomplete
+      tags: [Autocomplete]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Termo de busca (busca em descrição, tipo de entrada, obra, etc.)
+        - in: query
+          name: obra_id
+          schema:
+            type: integer
+          description: Filtrar por ID da obra
+        - in: query
+          name: fonte_pagadora_id
+          schema:
+            type: integer
+          description: Filtrar por ID da fonte pagadora
+        - in: query
+          name: tipo_entrada
+          schema:
+            type: string
+            enum: [aporte_inicial, aporte_adicional, reembolso, regular]
+          description: Filtrar por tipo de entrada
+      responses:
+        '200':
+          description: Lista de entradas de recursos formatadas para autocomplete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        text:
+                          type: string
+                        data:
+                          $ref: '../entrada-recurso.yaml#/components/schemas/EntradaRecursoResource'
+                  pagination:
+                    type: object
+                    properties:
+                      more:
+                        type: boolean
+                        description: Indica se existem mais páginas de resultados
+
 components:
   securitySchemes:
     bearerAuth:

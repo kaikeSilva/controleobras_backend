@@ -2,25 +2,27 @@
 
 namespace Database\Seeders;
 
+use App\Models\Cliente;
 use Illuminate\Database\Seeder;
-use App\Models\Client;
-use Illuminate\Support\Str;
+use Faker\Factory as Faker;
 
-class ClientSeeder extends Seeder
+class ClienteSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        $faker = \Faker\Factory::create('pt_BR');
+        $faker = Faker::create('pt_BR');
 
-        for ($i = 1; $i <= 50; $i++) {
-            Client::create([
+        // Criar 10 clientes de exemplo
+        for ($i = 0; $i < 10; $i++) {            
+            Cliente::create([
                 'name' => $faker->name(),
                 'email' => $faker->unique()->safeEmail(),
                 'phone' => $faker->phoneNumber(),
                 'address' => $faker->address(),
+                'status' => $faker->randomElement(['ativo', 'inativo']),
             ]);
         }
     }

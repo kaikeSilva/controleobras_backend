@@ -1,0 +1,335 @@
+openapi: 3.0.0
+info:
+  title: API de Entrada de Recursos
+  description: API para gerenciamento de entradas de recursos financeiros das obras
+  version: 1.0.0
+
+paths:
+  /api/entradas-recursos:
+    get:
+      tags: [EntradaRecursos]
+      summary: Lista todas as entradas de recursos
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/direction'
+        - name: filter[search]
+          in: query
+          description: Termo para busca em descrição, tipo de entrada, etc.
+          schema:
+            type: string
+        - name: filter[obra_id]
+          in: query
+          description: Filtrar por ID da obra
+          schema:
+            type: integer
+        - name: filter[fonte_pagadora_id]
+          in: query
+          description: Filtrar por ID da fonte pagadora
+          schema:
+            type: integer
+        - name: filter[tipo_entrada]
+          in: query
+          description: Filtrar por tipo de entrada (aporte_inicial, aporte_adicional, reembolso, regular)
+          schema:
+            type: string
+        - name: filter[data_entrada]
+          in: query
+          description: Filtrar por data de entrada específica (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: filter[data_inicio]
+          in: query
+          description: Data inicial para filtro por período (usar com data_fim)
+          schema:
+            type: string
+            format: date
+        - name: filter[data_fim]
+          in: query
+          description: Data final para filtro por período (usar com data_inicio)
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Lista de entradas de recursos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntradaRecursoCollection'
+    post:
+      tags: [EntradaRecursos]
+      summary: Cria uma nova entrada de recurso
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntradaRecursoInput'
+      responses:
+        '201':
+          description: Entrada de recurso criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntradaRecursoResource'
+        '422':
+          description: Erro de validação
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /api/entradas-recursos/{id}:
+    parameters:
+      - $ref: '#/components/parameters/id'
+    get:
+      tags: [EntradaRecursos]
+      summary: Exibe os detalhes de uma entrada de recurso
+      responses:
+        '200':
+          description: Detalhes da entrada de recurso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntradaRecursoResource'
+        '404':
+          description: Entrada de recurso não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+    put:
+      tags: [EntradaRecursos]
+      summary: Atualiza uma entrada de recurso existente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntradaRecursoInput'
+      responses:
+        '200':
+          description: Entrada de recurso atualizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntradaRecursoResource'
+        '404':
+          description: Entrada de recurso não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '422':
+          description: Erro de validação
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+    delete:
+      tags: [EntradaRecursos]
+      summary: Remove uma entrada de recurso
+      responses:
+        '200':
+          description: Entrada de recurso removida com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Entrada de recurso excluída com sucesso
+        '404':
+          description: Entrada de recurso não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+
+  /api/autocomplete/entradas-recursos:
+    get:
+      tags: [Autocomplete]
+      summary: Busca de entradas de recursos para autocomplete
+      parameters:
+        - name: search
+          in: query
+          description: Termo para busca
+          schema:
+            type: string
+        - name: obra_id
+          in: query
+          description: Filtrar por ID da obra
+          schema:
+            type: integer
+        - name: fonte_pagadora_id
+          in: query
+          description: Filtrar por ID da fonte pagadora
+          schema:
+            type: integer
+        - name: tipo_entrada
+          in: query
+          description: Filtrar por tipo de entrada (aporte_inicial, aporte_adicional, reembolso, regular)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de entradas de recursos para autocomplete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        text:
+                          type: string
+                        data:
+                          $ref: '#/components/schemas/EntradaRecursoResource'
+                  pagination:
+                    type: object
+                    properties:
+                      more:
+                        type: boolean
+
+components:
+  schemas:
+    EntradaRecursoResource:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        obra_id:
+          type: integer
+          example: 1
+        obra:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            nome:
+              type: string
+              example: 'Casa na Praia'
+        fonte_pagadora_id:
+          type: integer
+          example: 1
+        fonte_pagadora:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            nome:
+              type: string
+              example: 'Banco do Brasil'
+        valor:
+          type: number
+          format: float
+          example: 5000.00
+        valor_formatado:
+          type: string
+          example: 'R$ 5.000,00'
+        data_entrada:
+          type: string
+          format: date
+          example: '2023-05-26'
+        data_entrada_formatada:
+          type: string
+          example: '26/05/2023'
+        descricao:
+          type: string
+          example: 'Aporte inicial para início das obras'
+        comprovante_url:
+          type: string
+          format: uri
+          nullable: true
+          example: 'https://example.com/comprovantes/1.pdf'
+        tipo_entrada:
+          type: string
+          enum: [aporte_inicial, aporte_adicional, reembolso, regular]
+          example: 'aporte_inicial'
+        tipo_entrada_formatado:
+          type: string
+          example: 'Aporte Inicial'
+        created_at:
+          type: string
+          format: date-time
+          example: '2023-05-26T14:30:00Z'
+        created_at_formatado:
+          type: string
+          example: '26/05/2023 11:30:00'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2023-05-26T14:30:00Z'
+        updated_at_formatado:
+          type: string
+          example: '26/05/2023 11:30:00'
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        deleted_at_formatado:
+          type: string
+          nullable: true
+          example: null
+
+    EntradaRecursoCollection:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntradaRecursoResource'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    EntradaRecursoInput:
+      type: object
+      required:
+        - obra_id
+        - fonte_pagadora_id
+        - valor
+        - data_entrada
+        - descricao
+      properties:
+        obra_id:
+          type: integer
+          example: 1
+        fonte_pagadora_id:
+          type: integer
+          example: 1
+        valor:
+          type: number
+          format: float
+          example: 5000.00
+        data_entrada:
+          type: string
+          format: date
+          example: '2023-05-26'
+        descricao:
+          type: string
+          example: 'Aporte inicial para início das obras'
+        comprovante_url:
+          type: string
+          format: uri
+          nullable: true
+          example: 'https://example.com/comprovantes/1.pdf'
+        tipo_entrada:
+          type: string
+          enum: [aporte_inicial, aporte_adicional, reembolso, regular]
+          default: 'regular'
+          example: 'aporte_inicial'

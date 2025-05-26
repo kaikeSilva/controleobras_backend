@@ -10,6 +10,7 @@ use App\Http\Controllers\UserAuthController;
 use App\Http\Controllers\Api\AutocompleteController;
 use App\Http\Controllers\Api\CategoriaGastoController;
 use App\Http\Controllers\Api\GastoController;
+use App\Http\Controllers\Api\EntradaRecursoController;
 
 Route::apiResource('categorias-gastos', CategoriaGastoController::class)->middleware('auth:sanctum');
 Route::apiResource('gastos', GastoController::class)->middleware('auth:sanctum');
@@ -22,6 +23,8 @@ Route::get('autocomplete/obras', [AutocompleteController::class, 'obras'])->midd
 Route::get('autocomplete/clientes', [AutocompleteController::class, 'clientes'])->middleware('auth:sanctum');
 Route::get('autocomplete/categorias-gastos', [AutocompleteController::class, 'categoriasGastos'])->middleware('auth:sanctum');
 Route::get('autocomplete/gastos', [AutocompleteController::class, 'gastos'])->middleware('auth:sanctum');
+Route::get('autocomplete/entradas-recursos', [AutocompleteController::class, 'entradasRecursos'])->middleware('auth:sanctum');
+Route::apiResource('entradas-recursos', EntradaRecursoController::class)->middleware('auth:sanctum');
 Route::apiResource('users', UserController::class)->middleware('auth:sanctum');
 Route::post('/login', [UserAuthController::class, 'login']);
 Route::post('register',[UserAuthController::class,'register']);

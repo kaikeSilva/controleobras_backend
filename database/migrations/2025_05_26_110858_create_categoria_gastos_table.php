@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('nome');
             $table->string('slug')->unique();
-            $table->boolean('status')->default(true);
-            $table->foreignId('cliente_id')->nullable()->constrained('clients')->onDelete('cascade');
+            $table->enum('status', ['ativo', 'inativo'])->default('ativo');
+            $table->foreignId('cliente_id')->nullable()->constrained('clientes')->onDelete('cascade');
             $table->text('descricao')->nullable();
             $table->string('cor', 7)->nullable();
             $table->softDeletes();

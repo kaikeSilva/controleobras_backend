@@ -33,6 +33,10 @@ class Gasto extends Model
         'deleted_at' => 'datetime',
     ];
 
+    public function getNomeAttribute()
+    {
+        return $this->obra->nome . ' - ' . $this->categoriaGasto->nome . ' - ' . $this->valor;
+    }
     public function obra(): BelongsTo
     {
         return $this->belongsTo(Obra::class);

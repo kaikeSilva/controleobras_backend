@@ -12,10 +12,6 @@ class ObraSeeder extends Seeder
      */
     public function run(): void
     {
-        $statusList = ['ativo', 'inativo'];
-        Obra::factory(20)->make()->each(function($obra) use ($statusList) {
-            $obra->status = $statusList[array_rand($statusList)];
-            $obra->save();
-        });
+        Obra::factory(20)->create();
     }
 }
