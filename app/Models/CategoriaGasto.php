@@ -13,13 +13,15 @@ class CategoriaGasto extends Model
 
     protected $table = 'categoria_gastos';
 
+    const STATUS_ATIVO = 'ativo';
+    const STATUS_INATIVO = 'inativo';
+
     protected $fillable = [
         'nome',
         'slug',
         'status',
         'cliente_id',
         'descricao',
-        'status',
         'cor'
     ];
 
@@ -83,10 +85,18 @@ class CategoriaGasto extends Model
         return [
             'nome' => ['required', 'string', 'max:255', $uniqueRule],
             'slug' => ['required', 'string', 'max:255', $uniqueRule],
-            'status' => ['boolean'],
+            'status' => ['required', 'string', 'in:' . self::STATUS_ATIVO . ',' . self::STATUS_INATIVO],
             'cliente_id' => ['nullable', 'exists:clientes,id'],
             'descricao' => ['nullable', 'string'],
             'cor' => ['nullable', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
+        ];
+    }
+    
+    public static function getStatusOptions()
+    {
+        return [
+            self::STATUS_ATIVO => 'Ativo',
+            self::STATUS_INATIVO => 'Inativo',
         ];
     }
 }

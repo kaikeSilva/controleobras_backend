@@ -7,6 +7,7 @@ use App\Http\Resources\CategoriaGastoResource;
 use App\Models\CategoriaGasto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class CategoriaGastoController extends Controller
 {
@@ -34,7 +35,7 @@ class CategoriaGastoController extends Controller
 
             // Filtro por status
             if (isset($filters['status']) && $filters['status'] !== '') {
-                $query->where('status', (bool)$filters['status']);
+                $query->where('status', $filters['status']);
             }
 
             // Filtro geral 'busca' (LIKE em campos específicos)
@@ -80,7 +81,11 @@ class CategoriaGastoController extends Controller
     {
         $validated = $request->validate([
             'nome' => 'required|string|max:255|unique:categoria_gastos,nome',
-            'status' => 'sometimes|boolean',
+            'status' => [
+                'required', 
+                'string', 
+                Rule::in([CategoriaGasto::STATUS_ATIVO, CategoriaGasto::STATUS_INATIVO])
+            ],
             'cliente_id' => 'nullable|exists:clientes,id',
             'descricao' => 'nullable|string',
             'cor' => ['nullable', 'string', 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
@@ -89,7 +94,9 @@ class CategoriaGastoController extends Controller
             'nome.string' => 'O nome deve ser um texto.',
             'nome.max' => 'O nome não pode ter mais de 255 caracteres.',
             'nome.unique' => 'Já existe uma categoria com este nome.',
-            'status.boolean' => 'O status deve ser verdadeiro ou falso.',
+            'status.required' => 'O campo status é obrigatório.',
+            'status.string' => 'O status deve ser um texto.',
+            'status.in' => 'O status deve ser "ativo" ou "inativo".',
             'cliente_id.exists' => 'O cliente selecionado não foi encontrado.',
             'descricao.string' => 'A descrição deve ser um texto.',
             'cor.regex' => 'A cor deve estar no formato hexadecimal (ex: #FFFFFF ou #FFF).',
@@ -153,7 +160,12 @@ class CategoriaGastoController extends Controller
 
         $validated = $request->validate([
             'nome' => 'sometimes|required|string|max:255|unique:categoria_gastos,nome,' . $id,
-            'status' => 'sometimes|boolean',
+            'status' => [
+                'sometimes', 
+                'required', 
+                'string', 
+                Rule::in([CategoriaGasto::STATUS_ATIVO, CategoriaGasto::STATUS_INATIVO])
+            ],
             'cliente_id' => 'nullable|exists:clientes,id',
             'descricao' => 'nullable|string',
             'cor' => 'nullable|string|regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
@@ -162,7 +174,9 @@ class CategoriaGastoController extends Controller
             'nome.string' => 'O nome deve ser um texto.',
             'nome.max' => 'O nome não pode ter mais de 255 caracteres.',
             'nome.unique' => 'Já existe uma categoria com este nome.',
-            'status.boolean' => 'O status deve ser verdadeiro ou falso.',
+            'status.required' => 'O campo status é obrigatório.',
+            'status.string' => 'O status deve ser um texto.',
+            'status.in' => 'O status deve ser "ativo" ou "inativo".',
             'cliente_id.exists' => 'O cliente selecionado não foi encontrado.',
             'descricao.string' => 'A descrição deve ser um texto.',
             'cor.regex' => 'A cor deve estar no formato hexadecimal (ex: #FFFFFF ou #FFF).',
