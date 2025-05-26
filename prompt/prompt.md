@@ -25,4 +25,4 @@ Representa os aportes financeiros recebidos para as obras.
  - documentacao no na pasta do swagger e na view do swagger
  - Rota no autocomplete
 
-- deve ser possivel filtrar as gastos por search por nome do cliente/descricao/string da data de compra/string da data de pagamento/string do numero do documento/string da data de criacao/string do valor/ nome da obra/ nome da categoria/ nome da fonte pagadora
+- deve ser possivel filtrar as entradas de recursos por search por nome da obra/descricao/string da data de entrada/string do valor/string da data de criacao/nome da fonte pagadora/tipo de entrada
