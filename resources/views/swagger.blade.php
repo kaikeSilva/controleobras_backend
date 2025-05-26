@@ -16,6 +16,7 @@
     <button id="btn-fonte" type="button" style="margin: 0 8px; padding: 8px 20px; border-radius: 6px; border: 1px solid #6B7280; background: #6B7280; color: #fff; font-weight: 600; cursor: pointer;">Fontes Pagadoras</button>
     <button id="btn-obra" type="button" style="margin: 0 8px; padding: 8px 20px; border-radius: 6px; border: 1px solid #6B7280; background: #6B7280; color: #fff; font-weight: 600; cursor: pointer;">Obras</button>
     <button id="btn-categoria-gasto" type="button" style="margin: 0 8px; padding: 8px 20px; border-radius: 6px; border: 1px solid #6B7280; background: #6B7280; color: #fff; font-weight: 600; cursor: pointer;">Categorias de Gastos</button>
+    <button id="btn-gasto" type="button" style="margin: 0 8px; padding: 8px 20px; border-radius: 6px; border: 1px solid #6B7280; background: #6B7280; color: #fff; font-weight: 600; cursor: pointer;">Gastos</button>
     <button id="btn-autocomplete" type="button" style="margin: 0 8px; padding: 8px 20px; border-radius: 6px; border: 1px solid #6B7280; background: #6B7280; color: #fff; font-weight: 600; cursor: pointer;">Autocomplete</button>
     <button id="btn-user" type="button" style="margin: 0 8px; padding: 8px 20px; border-radius: 6px; border: 1px solid #6B7280; background: #6B7280; color: #fff; font-weight: 600; cursor: pointer;">Usuários</button>
 </div>
@@ -28,6 +29,7 @@
         fonte: '{{ url('swagger/fonte-pagadora.yaml') }}',
         obra: '{{ url('swagger/obra.yaml') }}',
         categoriaGasto: '{{ url('swagger/categoria-gasto.yaml') }}',
+        gasto: '{{ url('swagger/gastos.yml') }}',
         autocomplete: '{{ url('swagger/autocomplete.yaml') }}',
         user: '{{ url('swagger/user.yaml') }}'
     };
@@ -49,6 +51,7 @@
         document.getElementById('btn-auth').style.background = (fileKey === 'auth') ? '#3B82F6' : '#6B7280';
         document.getElementById('btn-client').style.background = (fileKey === 'client') ? '#3B82F6' : '#6B7280';
         document.getElementById('btn-fonte').style.background = (fileKey === 'fonte') ? '#3B82F6' : '#6B7280';
+        document.getElementById('btn-gasto').style.background = (fileKey === 'gasto') ? '#3B82F6' : '#6B7280';
         document.getElementById('btn-obra').style.background = (fileKey === 'obra') ? '#3B82F6' : '#6B7280';
         document.getElementById('btn-categoria-gasto').style.background = (fileKey === 'categoriaGasto') ? '#3B82F6' : '#6B7280';
         document.getElementById('btn-autocomplete').style.background = (fileKey === 'autocomplete') ? '#3B82F6' : '#6B7280';
@@ -58,8 +61,9 @@
     document.getElementById('btn-client').onclick = () => renderSwagger('client');
     document.getElementById('btn-fonte').onclick = () => renderSwagger('fonte');
     document.getElementById('btn-obra').onclick = () => renderSwagger('obra');
-    document.getElementById('btn-categoria-gasto').onclick = () => renderSwagger('categoriaGasto');
-    document.getElementById('btn-autocomplete').onclick = () => renderSwagger('autocomplete');
+    document.getElementById('btn-categoria-gasto').addEventListener('click', () => renderSwagger('categoriaGasto'));
+    document.getElementById('btn-gasto').addEventListener('click', () => renderSwagger('gasto'));
+    document.getElementById('btn-autocomplete').addEventListener('click', () => renderSwagger('autocomplete'));
     document.getElementById('btn-user').onclick = () => renderSwagger('user');
     window.onload = () => renderSwagger('auth');
 </script>

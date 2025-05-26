@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\AutocompleteResource;
 
 class ObraResource extends JsonResource
 {
@@ -17,6 +18,7 @@ class ObraResource extends JsonResource
         return [
             'id' => $this->id,
             'cliente_id' => $this->cliente_id,
+            'cliente' => new AutocompleteResource($this->whenLoaded('cliente')),
             'nome' => $this->nome,
             'descricao' => $this->descricao,
             'endereco' => $this->endereco,

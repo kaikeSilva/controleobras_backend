@@ -1,0 +1,332 @@
+openapi: 3.0.0
+info:
+  title: API de Gastos
+  description: API para gerenciamento de gastos das obras
+  version: 1.0.0
+
+paths:
+  /api/gastos:
+    get:
+      tags: [Gastos]
+      summary: Lista todos os gastos
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/direction'
+        - name: filter[search]
+          in: query
+          description: Termo para busca em descrição, número do documento, valor, etc.
+          schema:
+            type: string
+        - name: filter[obra_id]
+          in: query
+          description: Filtrar por ID da obra
+          schema:
+            type: integer
+        - name: filter[categoria_gasto_id]
+          in: query
+          description: Filtrar por ID da categoria de gasto
+          schema:
+            type: integer
+        - name: filter[fonte_pagadora_id]
+          in: query
+          description: Filtrar por ID da fonte pagadora
+          schema:
+            type: integer
+        - name: filter[data_compra]
+          in: query
+          description: Filtrar por data de compra (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: filter[data_pagamento]
+          in: query
+          description: Filtrar por data de pagamento (YYYY-MM-DD) ou 'null' para não pagos
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de gastos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GastoCollection'
+    post:
+      tags: [Gastos]
+      summary: Cria um novo gasto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GastoInput'
+      responses:
+        '201':
+          description: Gasto criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GastoResource'
+        '422':
+          description: Erro de validação
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /api/gastos/{id}:
+    parameters:
+      - $ref: '#/components/parameters/id'
+    get:
+      tags: [Gastos]
+      summary: Exibe os detalhes de um gasto
+      responses:
+        '200':
+          description: Detalhes do gasto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GastoResource'
+        '404':
+          description: Gasto não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+    put:
+      tags: [Gastos]
+      summary: Atualiza um gasto existente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GastoInput'
+      responses:
+        '200':
+          description: Gasto atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GastoResource'
+        '404':
+          description: Gasto não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+        '422':
+          description: Erro de validação
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+    delete:
+      tags: [Gastos]
+      summary: Remove um gasto
+      responses:
+        '200':
+          description: Gasto removido com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Gasto excluído com sucesso
+        '404':
+          description: Gasto não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+
+  /api/autocomplete/gastos:
+    get:
+      tags: [Autocomplete]
+      summary: Busca de gastos para autocomplete
+      parameters:
+        - name: search
+          in: query
+          description: Termo para busca
+          schema:
+            type: string
+        - name: obra_id
+          in: query
+          description: Filtrar por ID da obra
+          schema:
+            type: integer
+        - name: categoria_gasto_id
+          in: query
+          description: Filtrar por ID da categoria de gasto
+          schema:
+            type: integer
+        - name: fonte_pagadora_id
+          in: query
+          description: Filtrar por ID da fonte pagadora
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de gastos para autocomplete
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    text:
+                      type: string
+                    data:
+                      $ref: '#/components/schemas/GastoResource'
+
+components:
+  schemas:
+    GastoResource:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        obra_id:
+          type: integer
+          example: 1
+        categoria_gasto_id:
+          type: integer
+          example: 1
+        fonte_pagadora_id:
+          type: integer
+          example: 1
+        descricao:
+          type: string
+          example: Compra de material de construção
+        valor:
+          type: number
+          format: float
+          example: 1250.75
+        data_compra:
+          type: string
+          format: date
+          example: '2023-05-26'
+        data_pagamento:
+          type: string
+          format: date
+          nullable: true
+          example: '2023-05-26'
+        numero_documento:
+          type: string
+          nullable: true
+          example: 'NF-123456'
+        comprovante_url:
+          type: string
+          format: uri
+          nullable: true
+          example: 'https://example.com/comprovantes/1.pdf'
+        observacoes:
+          type: string
+          nullable: true
+          example: 'Material para alvenaria'
+        created_at:
+          type: string
+          format: date-time
+          example: '2023-05-26T14:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2023-05-26T14:30:00Z'
+        obra:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            nome:
+              type: string
+              example: 'Casa na Praia'
+        categoria_gasto:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            nome:
+              type: string
+              example: 'Material de Construção'
+        fonte_pagadora:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            nome:
+              type: string
+              example: 'Banco do Brasil'
+
+    GastoCollection:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/GastoResource'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    GastoInput:
+      type: object
+      required:
+        - obra_id
+        - categoria_gasto_id
+        - fonte_pagadora_id
+        - descricao
+        - valor
+        - data_compra
+      properties:
+        obra_id:
+          type: integer
+          example: 1
+        categoria_gasto_id:
+          type: integer
+          example: 1
+        fonte_pagadora_id:
+          type: integer
+          example: 1
+        descricao:
+          type: string
+          example: Compra de material de construção
+        valor:
+          type: number
+          format: float
+          example: 1250.75
+        data_compra:
+          type: string
+          format: date
+          example: '2023-05-26'
+        data_pagamento:
+          type: string
+          format: date
+          nullable: true
+          example: '2023-05-26'
+        numero_documento:
+          type: string
+          nullable: true
+          maxLength: 100
+          example: 'NF-123456'
+        comprovante_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 255
+          example: 'https://example.com/comprovantes/1.pdf'
+        observacoes:
+          type: string
+          nullable: true
+          maxLength: 2000
+          example: 'Material para alvenaria'

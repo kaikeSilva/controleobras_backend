@@ -119,7 +119,8 @@ Representa cada despesa individual registrada em uma obra.
 - `numero_documento`: Número da nota fiscal ou recibo
 - `comprovante_url`: Link/caminho para o arquivo do comprovante
 - `observacoes`: Observações adicionais
-- `data_cadastro`: Data de criação do registro
+- `timestamps`: created_at, updated_at
+- `soft delete`: deleted_at
 
 **Relacionamentos:**
 - Um Gasto pertence a uma Obra (N:1)
@@ -140,8 +141,9 @@ Representa os aportes financeiros recebidos para as obras.
 - `data_entrada`: Data do recebimento
 - `descricao`: Descrição do aporte
 - `comprovante_url`: Link para comprovante (opcional)
-- `tipo_entrada`: Tipo (Aporte inicial, Aporte adicional, Reembolso)
-- `data_cadastro`: Data de criação do registro
+- `tipo_entrada`: Tipo (Aporte inicial, Aporte adicional, Reembolso, regular) o tipo regular eh o default
+- `timestamps`: created_at, updated_at
+- `soft delete`: deleted_at
 
 **Relacionamentos:**
 - Uma Entrada pertence a uma Obra (N:1)

@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
         // Executa os seeders necessários
         $this->call([
             \Database\Seeders\CategoriaGastoSeeder::class,
+            \Database\Seeders\GastoSeeder::class,
         ]);
     }
 }
