@@ -18,7 +18,7 @@ class CategoriaGastoResource extends JsonResource
             'id' => $this->id,
             'nome' => $this->nome,
             'slug' => $this->slug,
-            'status' => (bool) $this->status,
+            'status' =>  $this->status,
             'cliente_id' => $this->cliente_id ? (int) $this->cliente_id : null,
             'cliente' => $this->whenLoaded('cliente', function () {
                 return [

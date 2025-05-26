@@ -19,11 +19,11 @@ class CategoriaGasto extends Model
         'status',
         'cliente_id',
         'descricao',
+        'status',
         'cor'
     ];
 
     protected $casts = [
-        'status' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
