@@ -73,7 +73,7 @@ class ObraController extends Controller
      */
     public function show(string $id)
     {
-        $obra = Obra::findOrFail($id);
+        $obra = Obra::with('cliente')->findOrFail($id);
         return new ObraResource($obra);
     }
 

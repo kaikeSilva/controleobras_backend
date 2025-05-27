@@ -54,6 +54,11 @@ class GastoController extends Controller
                 $query->where('categoria_gasto_id', $filters['categoria_gasto_id']);
             }
 
+            $categorias = $filters['categorias_gasto'] ?? [];
+            if (!empty($categorias)) {
+                $query->whereIn('categoria_gasto_id', $categorias);
+            }
+
             // Filtro por fonte_pagadora_id
             if (!empty($filters['fonte_pagadora_id'])) {
                 $query->where('fonte_pagadora_id', $filters['fonte_pagadora_id']);
@@ -81,6 +86,10 @@ class GastoController extends Controller
             // Filtro por valor máximo
             if (!empty($filters['valor_max'])) {
                 $query->where('valor', '<=', $filters['valor_max']);
+            }
+
+            if (!empty($filters['data_inicio']) && !empty($filters['data_fim'])) {
+                $query->whereBetween('data_pagamento', [$filters['data_inicio'], $filters['data_fim']]);
             }
         }
 

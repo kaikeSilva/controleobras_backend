@@ -19,7 +19,7 @@ class GastoFactory extends Factory
         $fontePagadora = FontePagadora::all()->random();
 
         return [
-            'obra_id' => $obra->id,
+            'obra_id' => 4,
             'categoria_gasto_id' => $categoriaGasto->id,
             'fonte_pagadora_id' => $fontePagadora->id,
             'descricao' => $this->faker->sentence(4),

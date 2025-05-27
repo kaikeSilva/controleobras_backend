@@ -28,7 +28,7 @@ class EntradaRecursoFactory extends Factory
         $tipos = array_keys(EntradaRecurso::TIPOS_ENTRADA);
         
         return [
-            'obra_id' => $obra->id,
+            'obra_id' => 4,
             'fonte_pagadora_id' => $fontePagadora->id,
             'valor' => $this->faker->randomFloat(2, 100, 100000),
             'data_entrada' => $this->faker->dateTimeBetween('-1 year', 'now'),

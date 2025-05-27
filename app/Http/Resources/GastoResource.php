@@ -33,6 +33,7 @@ class GastoResource extends JsonResource
                 return [
                     'id' => $this->categoriaGasto->id,
                     'nome' => $this->categoriaGasto->nome,
+                    'cor' => $this->categoriaGasto->cor,
                 ];
             }),
             'fonte_pagadora' => $this->whenLoaded('fontePagadora', function () {
