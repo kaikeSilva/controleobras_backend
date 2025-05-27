@@ -4,13 +4,15 @@ info:
   description: API REST para CRUD de clientes usando Laravel
   version: 1.0.0
 servers:
-  - url: http://localhost/api
+  - url: /api # Standardized server URL
 paths:
   /clients:
     get:
       summary: Lista clientes
       tags:
         - Clientes
+      security: # Added security
+        - bearerAuth: []
       parameters:
         - in: query
           name: filter[busca]
@@ -54,6 +56,23 @@ paths:
           schema:
             type: integer
           description: Itens por página
+        - in: query
+          name: filter[id]
+          schema:
+            type: integer
+          description: Filtrar por ID exato do cliente
+        - in: query
+          name: filter[created_at]
+          schema:
+            type: string
+            format: date
+          description: "Filtrar por data de criação (YYYY-MM-DD)"
+        - in: query
+          name: filter[updated_at]
+          schema:
+            type: string
+            format: date
+          description: "Filtrar por data de atualização (YYYY-MM-DD)"
       responses:
         '200':
           description: Lista paginada de clientes
@@ -65,6 +84,8 @@ paths:
       summary: Cria um novo cliente
       tags:
         - Clientes
+      security: # Added security
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -85,6 +106,8 @@ paths:
       summary: Busca cliente por ID
       tags:
         - Clientes
+      security: # Added security
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
@@ -104,6 +127,8 @@ paths:
       summary: Atualiza cliente
       tags:
         - Clientes
+      security: # Added security
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
@@ -112,6 +137,7 @@ paths:
             type: integer
       requestBody:
         required: true
+        description: "Dados do cliente para atualização. Campos 'name' e 'email' no schema ClientRequest são obrigatórios apenas se presentes na requisição, devido à lógica 'sometimes' no backend."
         content:
           application/json:
             schema:
@@ -131,6 +157,8 @@ paths:
       summary: Remove um cliente
       tags:
         - Clientes
+      security: # Added security
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
@@ -198,14 +226,47 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Client'
+        links:
+          type: object
+          properties:
+            first: { type: string, format: url, nullable: true }
+            last: { type: string, format: url, nullable: true }
+            prev: { type: string, format: url, nullable: true }
+            next: { type: string, format: url, nullable: true }
+          example:
+            first: "http://localhost/api/clients?page=1"
+            last: "http://localhost/api/clients?page=5"
+            prev: null
+            next: "http://localhost/api/clients?page=2"
         meta:
           type: object
           properties:
-            current_page:
-              type: integer
-            last_page:
-              type: integer
-            per_page:
-              type: integer
-            total:
-              type: integer
+            current_page: { type: integer }
+            from: { type: integer, nullable: true }
+            last_page: { type: integer }
+            links:
+              type: array
+              items:
+                type: object
+                properties:
+                  url: { type: string, format: url, nullable: true }
+                  label: { type: string }
+                  active: { type: boolean }
+            path: { type: string, format: url }
+            per_page: { type: integer }
+            to: { type: integer, nullable: true }
+            total: { type: integer }
+          example:
+            current_page: 1
+            from: 1
+            last_page: 5
+            links: [] # Simplified for example, real one has more items
+            path: "http://localhost/api/clients"
+            per_page: 15
+            to: 15
+            total: 70
+  securitySchemes: # Added securitySchemes
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
