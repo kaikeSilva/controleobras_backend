@@ -50,6 +50,27 @@
             color: #a0aec0;
         }
 
+        .filter-summary-section {
+            text-align: center;
+            padding: 10px 15px; /* Adjusted padding */
+            margin-bottom: 25px; /* Adjusted margin */
+            border: 1px dashed #adb5bd; /* Adjusted border color */
+            background-color: #f8f9fa; /* Adjusted background */
+            font-size: 10px;
+            border-radius: 4px; /* Added border-radius */
+        }
+        .filter-summary-section p {
+            margin-bottom: 5px; /* Adjusted margin */
+            color: #495057; /* Adjusted text color */
+            line-height: 1.5; /* Added line-height */
+        }
+        .filter-summary-section p:last-child {
+            margin-bottom: 0;
+        }
+        .filter-summary-section strong {
+            color: #343a40; /* Darker color for strong tags */
+        }
+
         /* Cards Grid */
         .cards-grid {
             display: grid;
@@ -123,7 +144,8 @@
         }
 
         .chart-container {
-            width: 100%;
+            width: 90%; /* Changed from 100% */
+            max-width: 800px; /* Added */
             height: 300px;
             margin: 0 auto;
         }
@@ -270,6 +292,19 @@
             <div class="date">Gerado em {{ now()->format('d/m/Y H:i:s') }}</div>
         </div>
 
+        <!-- Filtros Aplicados -->
+        @if(isset($dataInicioFmt) && isset($dataFimFmt))
+        <div class="filter-summary-section no-break">
+            <p><strong>Período apurado:</strong> {{ $dataInicioFmt }} a {{ $dataFimFmt }}</p>
+            @if(isset($nomesObrasSelecionadas))
+            <p><strong>Obras consideradas:</strong> {{ is_array($nomesObrasSelecionadas) && !empty($nomesObrasSelecionadas) ? implode(', ', $nomesObrasSelecionadas) : (is_string($nomesObrasSelecionadas) ? $nomesObrasSelecionadas : 'Todas') }}</p>
+            @endif
+            @if(isset($nomesCategoriasSelecionadas))
+            <p><strong>Categorias consideradas:</strong> {{ is_array($nomesCategoriasSelecionadas) && !empty($nomesCategoriasSelecionadas) ? implode(', ', $nomesCategoriasSelecionadas) : (is_string($nomesCategoriasSelecionadas) ? $nomesCategoriasSelecionadas : 'Todas') }}</p>
+            @endif
+        </div>
+        @endif
+
         <!-- Cards com Resumo Financeiro -->
         @if(isset($data['resumo']['valores_brutos']))
         <div class="cards-grid no-break">
@@ -339,7 +374,7 @@
                             $saldo = ($mes['entradas'] + $mes['faturamento']) - $mes['gastos'];
                         @endphp
                         <tr>
-                            <td><strong>{{ $mes['mes_nome'] ?? 'N/A' }}</strong></td>
+                            <td><strong>{{ $mes['mes_ano'] ?? ($mes['mes_nome'] ?? 'N/A') }}</strong></td>
                             <td class="text-right text-red">R$ {{ number_format($mes['gastos'], 2, ',', '.') }}</td>
                             <td class="text-right text-green">R$ {{ number_format($mes['faturamento'], 2, ',', '.') }}</td>
                             <td class="text-right text-green">R$ {{ number_format($mes['entradas'], 2, ',', '.') }}</td>
@@ -408,20 +443,17 @@
             </div>
             <div style="padding: 20px;">
                 <p style="margin-bottom: 10px; font-size: 12px; line-height: 1.6;">
-                    <strong>Análise do Período:</strong> 
-                    @if($data['resumo']['valores_brutos']['saldo_liquido'] >= 0)
-                        O período apresentou resultado positivo de <strong>R$ {{ number_format($data['resumo']['valores_brutos']['saldo_liquido'], 2, ',', '.') }}</strong>, 
-                        indicando que as entradas de recursos (R$ {{ number_format($data['resumo']['valores_brutos']['total_entradas'], 2, ',', '.') }}) 
-                        somadas ao faturamento (R$ {{ number_format($data['resumo']['valores_brutos']['total_faturamento'], 2, ',', '.') }}) 
-                        superaram os gastos totais (R$ {{ number_format($data['resumo']['valores_brutos']['total_gastos'], 2, ',', '.') }}).
+                    <strong>Análise do Período:</strong>
+                    @if(isset($data['resumo']['valores_brutos']['caixa']))
+                        O caixa final do período foi de <strong>R$ {{ number_format($data['resumo']['valores_brutos']['caixa'], 2, ',', '.') }}</strong>.
+                        Este valor representa o total de entradas de recursos (R$ {{ number_format($data['resumo']['valores_brutos']['total_entradas'], 2, ',', '.') }})
+                        menos o total de gastos (R$ {{ number_format($data['resumo']['valores_brutos']['total_gastos'], 2, ',', '.') }}).
+                        O faturamento de R$ {{ number_format($data['resumo']['valores_brutos']['total_faturamento'], 2, ',', '.') }} não impacta diretamente este cálculo de caixa.
                     @else
-                        O período apresentou resultado negativo de <strong>R$ {{ number_format(abs($data['resumo']['valores_brutos']['saldo_liquido']), 2, ',', '.') }}</strong>, 
-                        indicando que os gastos totais (R$ {{ number_format($data['resumo']['valores_brutos']['total_gastos'], 2, ',', '.') }}) 
-                        superaram as entradas de recursos (R$ {{ number_format($data['resumo']['valores_brutos']['total_entradas'], 2, ',', '.') }}) 
-                        somadas ao faturamento (R$ {{ number_format($data['resumo']['valores_brutos']['total_faturamento'], 2, ',', '.') }}).
+                        Não foi possível calcular o caixa do período.
                     @endif
                 </p>
-                
+
                 @if(isset($data['evolucao_mensal']) && count($data['evolucao_mensal']) > 0)
                 <p style="font-size: 12px; line-height: 1.6;">
                     <strong>Período Analisado:</strong> {{ count($data['evolucao_mensal']) }} meses, 
