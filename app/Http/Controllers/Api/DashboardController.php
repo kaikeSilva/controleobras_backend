@@ -28,6 +28,21 @@ class DashboardController extends Controller
             : Carbon::now()->endOfMonth()->format('Y-m-d');
 
         $filters = $this->validateFilters($request);
+
+        // Fetch Filter Names
+        $nomesObrasSelecionadas = 'Todas';
+        if (!empty($filters['obras'])) {
+            $nomesObrasSelecionadas = Obra::whereIn('id', $filters['obras'])->pluck('nome')->implode(', ');
+        }
+        $nomesCategoriasSelecionadas = 'Todas';
+        if (!empty($filters['categorias_gasto'])) {
+            $nomesCategoriasSelecionadas = CategoriaGasto::whereIn('id', $filters['categorias_gasto'])->pluck('nome')->implode(', ');
+        }
+
+        // Format Dates
+        $dataInicioFmt = Carbon::parse($dataInicio)->format('d/m/Y');
+        $dataFimFmt = Carbon::parse($dataFim)->format('d/m/Y');
+
         $data = [
             'resumo' => $this->getResumoFinanceiro($filters),
             'evolucao_mensal' => $this->getEvolucaoMensal($filters),
@@ -47,7 +62,7 @@ class DashboardController extends Controller
 
 
         $pdfContent = Browsershot::html(view('reports.gastos', compact(
-            'data'
+            'data', 'dataInicioFmt', 'dataFimFmt', 'nomesObrasSelecionadas', 'nomesCategoriasSelecionadas'
         ))->render())
         ->setChromePath("/usr/bin/google-chrome-stable")
         ->noSandbox()
@@ -130,14 +145,14 @@ class DashboardController extends Controller
             ->selectRaw('SUM(gastos.valor * (obras.taxa_administracao/100)) as total_faturamento')
             ->value('total_faturamento') ?? 0;
 
-        // Saldo Líquido = Entradas + Faturamento - Gastos
-        $saldoLiquido = $totalEntradas + $totalFaturamento - $totalGastos;
+        // Caixa = Entradas - Gastos
+        $caixa = $totalEntradas - $totalGastos;
 
         // Formatação de valores para exibição
         $totalGastosFormatado = $this->formatarValor($totalGastos);
         $totalEntradasFormatado = $this->formatarValor($totalEntradas);
         $totalFaturamentoFormatado = $this->formatarValor($totalFaturamento);
-        $saldoLiquidoFormatado = $this->formatarValor($saldoLiquido);
+        $caixaFormatado = $this->formatarValor($caixa);
 
         return [
             // Dados brutos
@@ -145,7 +160,7 @@ class DashboardController extends Controller
                 'total_gastos' => (float) $totalGastos,
                 'total_entradas' => (float) $totalEntradas,
                 'total_faturamento' => (float) $totalFaturamento,
-                'saldo_liquido' => (float) $saldoLiquido,
+                'caixa' => (float) $caixa,
             ],
             
             // Dados formatados para os cards Vue
@@ -181,13 +196,13 @@ class DashboardController extends Controller
                     ]
                 ],
                 [
-                    'title' => 'Saldo Líquido',
-                    'value' => $saldoLiquidoFormatado,
+                    'title' => 'Caixa',
+                    'value' => $caixaFormatado,
                     'icon' => 'IconCalendar',
                     'change' => [
-                        'direction' => $saldoLiquido >= 0 ? '↗' : '↘',
+                        'direction' => $caixa >= 0 ? '↗' : '↘',
                         'value' => '+0,0%',
-                        'isPositive' => $saldoLiquido >= 0
+                        'isPositive' => $caixa >= 0
                     ]
                 ]
             ]
@@ -227,7 +242,7 @@ class DashboardController extends Controller
         }
 
         return [
-            'labels' => array_map(fn($item) => $item['mes_nome'], $evolucaoMensal),
+            'labels' => array_map(fn($item) => $item['mes_ano'], $evolucaoMensal),
             'datasets' => [
                 'gastos' => array_map(fn($item) => $item['gastos'], $evolucaoMensal),
                 'faturamento' => array_map(fn($item) => $item['faturamento'], $evolucaoMensal),
