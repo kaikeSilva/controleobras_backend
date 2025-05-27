@@ -175,6 +175,61 @@ paths:
                       type: object
                   total_gastos_encontrados:
                     type: integer
+  /dashboard/relatorio: # Added new path
+    get:
+      summary: Gera um relatório de gastos em PDF
+      tags: [Dashboard]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: data_inicio
+          schema:
+            type: string
+            format: date
+          required: false
+          description: "Data de início do período (YYYY-MM-DD). Opcional, padrão 6 meses atrás."
+        - in: query
+          name: data_fim
+          schema:
+            type: string
+            format: date
+          required: false
+          description: "Data de fim do período (YYYY-MM-DD). Opcional, padrão fim do mês atual."
+        - in: query
+          name: obras[]
+          schema:
+            type: array
+            items:
+              type: integer
+          required: false
+          description: "Filtro por IDs de obras. Se fornecido, data_inicio e data_fim são recomendados/validados."
+          style: form
+          explode: true
+        - in: query
+          name: categorias_gasto[]
+          schema:
+            type: array
+            items:
+              type: integer
+          required: false
+          description: "Filtro por IDs de categorias de gasto. Se fornecido, data_inicio e data_fim são recomendados/validados."
+          style: form
+          explode: true
+      responses:
+        '200':
+          description: Relatório de gastos em PDF.
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '422':
+          description: Erro de validação dos parâmetros.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
 
 components:
   securitySchemes:
@@ -202,37 +257,86 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/CategoriaGastoFiltro'
+        grafico_data: # Added new property
+          $ref: '#/components/schemas/GraficoData'
+    GraficoData: # Added new schema
+      type: object
+      properties:
+        labels:
+          type: array
+          items:
+            type: string
+          example: ["janeiro", "fevereiro", "março"]
+        datasets:
+          type: object
+          properties:
+            gastos:
+              type: array
+              items:
+                type: number
+                format: float
+            faturamento:
+              type: array
+              items:
+                type: number
+                format: float
+            entradas:
+              type: array
+              items:
+                type: number
+                format: float
+          example:
+            gastos: [1200.50, 1500.75, 1300.00]
+            faturamento: [120.05, 150.07, 130.00]
+            entradas: [2000.00, 2500.00, 2200.00]
     ResumoFinanceiro:
       type: object
       properties:
-        total_gastos:
-          type: number
-          format: float
-          example: 15000.50
-        total_entradas:
-          type: number
-          format: float
-          example: 20000.00
-        total_faturamento:
-          type: number
-          format: float
-          example: 3000.10
-        saldo_liquido:
-          type: number
-          format: float
-          example: 8000.60
-        total_gastos_formatado:
-          type: string
-          example: "R$ 15.000,50"
-        total_entradas_formatado:
-          type: string
-          example: "R$ 20.000,00"
-        total_faturamento_formatado:
-          type: string
-          example: "R$ 3.000,10"
-        saldo_liquido_formatado:
-          type: string
-          example: "R$ 8.000,60"
+        valores_brutos:
+          type: object
+          properties:
+            total_gastos:
+              type: number
+              format: float
+              example: 15000.50
+            total_entradas:
+              type: number
+              format: float
+              example: 20000.00
+            total_faturamento:
+              type: number
+              format: float
+              example: 3000.10
+            saldo_liquido:
+              type: number
+              format: float
+              example: 8000.60
+        cards:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+                example: "Total Gastos"
+              value:
+                type: string
+                example: "R$ 15,0K"
+              icon:
+                type: string
+                example: "IconCircleCheck"
+              change:
+                type: object
+                properties:
+                  direction:
+                    type: string
+                    example: "↗"
+                  value:
+                    type: string
+                    example: "+0,0%"
+                  isPositive:
+                    type: boolean
+                    example: false
     EvolucaoMensal:
       type: object
       properties:
@@ -287,3 +391,18 @@ components:
         cor:
           type: string
           example: "#FF0000"
+    ValidationError: # Added new schema
+      type: object
+      properties:
+        message:
+          type: string
+          example: "The given data was invalid."
+        errors:
+          type: object
+          additionalProperties: # Allows for dynamic keys like 'data_inicio', 'obras.0', etc.
+            type: array
+            items:
+              type: string
+          example:
+            data_inicio: ["The data inicio field is required."]
+            obras.0: ["The selected obras.0 is invalid."]

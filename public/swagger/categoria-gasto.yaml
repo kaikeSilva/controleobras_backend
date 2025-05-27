@@ -3,9 +3,10 @@ info:
   title: Categoria de Gastos API
   description: API para gerenciamento de categorias de gastos
   version: 1.0.0
-
+servers:
+  - url: /api
 paths:
-  /api/categorias-gastos:
+  /categorias-gastos:
     get:
       tags:
         - Categorias de Gastos
@@ -33,7 +34,28 @@ paths:
           name: filter[busca]
           schema:
             type: string
-          description: Busca textual nos campos nome e descrição
+          description: Busca textual nos campos nome, descrição e cor
+        - in: query
+          name: filter[id]
+          schema:
+            type: integer
+          description: Filtrar por ID exato da categoria
+        - in: query
+          name: filter[nome]
+          schema:
+            type: string
+          description: Filtrar por nome da categoria (busca parcial)
+        - in: query
+          name: filter[descricao]
+          schema:
+            type: string
+          description: Filtrar por descrição da categoria (busca parcial)
+        - in: query
+          name: filter[cor]
+          schema:
+            type: string
+            pattern: '^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'
+          description: Filtrar por cor da categoria (hexadecimal, busca parcial)
       responses:
         '200':
           description: Lista de categorias de gastos
@@ -78,7 +100,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidationError'
 
-  /api/categorias-gastos/{id}:
+  /categorias-gastos/{id}:
     get:
       tags:
         - Categorias de Gastos
@@ -109,6 +131,7 @@ paths:
         - $ref: '#/components/parameters/id_path'
       requestBody:
         required: true
+        description: "Dados da categoria de gasto para atualização. Campos marcados como 'required' no schema CategoriaGastoInput são obrigatórios apenas se presentes na requisição, devido à lógica 'sometimes' no backend."
         content:
           application/json:
             schema:
@@ -144,35 +167,6 @@ paths:
         '404':
           description: Categoria de gasto não encontrada
 
-  /api/autocomplete/categorias-gastos:
-    get:
-      tags:
-        - Autocomplete
-      summary: Busca categorias de gastos para autocomplete
-      description: Retorna uma lista de categorias de gastos para uso em campos de autocomplete.
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: query
-          name: search
-          schema:
-            type: string
-          description: Texto para busca nos campos nome e descrição
-        - in: query
-          name: cliente_id
-          schema:
-            type: integer
-          description: Filtrar por ID do cliente (inclui categorias sem cliente específico)
-      responses:
-        '200':
-          description: Lista de categorias de gastos para autocomplete
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AutocompleteItem'
-
 components:
   schemas:
     CategoriaGasto:
@@ -202,7 +196,7 @@ components:
             id:
               type: integer
               example: 1
-            nome:
+            name: # Changed from nome to name
               type: string
               example: "João da Silva"
         descricao:

@@ -42,9 +42,16 @@ paths:
             type: string
           description: Busca geral (nome, descrição, status)
         - in: query
+          name: filter[ativo] # Added filter[ativo]
+          schema:
+            type: boolean
+          description: Filtrar por status ativo (true ou false)
+        - in: query
           name: sort_by
           schema:
             type: string
+            default: id # Added default
+            enum: [id, nome, descricao, status, ativo, data_cadastro, created_at, updated_at] # Added enum
           description: Campo para ordenação
         - in: query
           name: direction
@@ -114,6 +121,7 @@ paths:
             type: integer
       requestBody:
         required: true
+        description: "Dados da fonte pagadora para atualização. Os campos 'nome' e 'cliente_id' são obrigatórios apenas se presentes na requisição (lógica 'sometimes'). O campo 'status' é sempre obrigatório. Outros campos são opcionais." # Updated description
         content:
           application/json:
             schema:
@@ -125,6 +133,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FontePagadora'
+        '422': # Added 422 response for PUT
+          description: Erro de validação
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404': # Added 404 response for PUT
+          description: Fonte Pagadora não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
     delete:
       summary: Remover (soft delete) fonte pagadora
       tags: [FontePagadora]
@@ -166,7 +186,7 @@ components:
           type: boolean
         data_cadastro:
           type: string
-          format: date-time
+          format: date # Changed from date-time
         cliente_id:
           type: integer
         status:
@@ -203,7 +223,7 @@ components:
         status:
           type: string
           enum: [ativo, inativo]
-    FontePagadoraPaginated:
+    FontePagadoraPaginated: # Redefined
       type: object
       properties:
         data:
@@ -212,5 +232,46 @@ components:
             $ref: '#/components/schemas/FontePagadora'
         links:
           type: object
+          properties:
+            first: { type: string, format: url, nullable: true }
+            last: { type: string, format: url, nullable: true }
+            prev: { type: string, format: url, nullable: true }
+            next: { type: string, format: url, nullable: true }
         meta:
           type: object
+          properties:
+            current_page: { type: integer }
+            from: { type: integer, nullable: true }
+            last_page: { type: integer }
+            links:
+              type: array
+              items:
+                type: object
+                properties:
+                  url: { type: string, format: url, nullable: true }
+                  label: { type: string }
+                  active: { type: boolean }
+            path: { type: string, format: url }
+            per_page: { type: integer }
+            to: { type: integer, nullable: true }
+            total: { type: integer }
+    ValidationError: # Added ValidationError
+      type: object
+      properties:
+        message:
+          type: string
+          example: "The given data was invalid."
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            nome: ["O campo nome é obrigatório."]
+    NotFoundError: # Added NotFoundError
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Recurso não encontrado."
