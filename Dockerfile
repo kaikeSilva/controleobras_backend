@@ -1,8 +1,52 @@
 FROM php:8.4 AS php
+# Instalar dependências para Chrome/Chromium
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg \
+    ca-certificates \
+    fonts-liberation \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libatspi2.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libdrm2 \
+    libgbm1 \
+    libglib2.0-0 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libx11-6 \
+    libx11-xcb1 \
+    libxcb1 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxi6 \
+    libxrandr2 \
+    libxrender1 \
+    libxss1 \
+    libxtst6 \
+    xdg-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instalar Chrome
+RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable \
+    && rm -rf /var/lib/apt/lists/*
+
+# Definir variável de ambiente para o Puppeteer usar o Chrome instalado
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
 
 # Instalar Node.js e npm
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y nodejs
+
 # Instalar dependências do sistema incluindo procps para o comando 'free' e netcat para verificação de portas
 RUN apt-get update -y && apt-get install -y \
     unzip \
@@ -27,6 +71,12 @@ ARG GROUP_ID=1000
 RUN groupadd -g ${GROUP_ID} appuser && \
     useradd -u ${USER_ID} -g appuser -m -s /bin/bash appuser && \
     echo 'appuser ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+ENV HOME=/home/appuser
+
+# Fix: Set correct ownership for appuser's home directory
+RUN mkdir -p /home/appuser/.local/share && \
+    chown -R appuser:appuser /home/appuser
 
 # Configurar diretório de trabalho
 WORKDIR /var/www/
@@ -54,7 +104,6 @@ USER appuser
 ENTRYPOINT ["docker/entrypoint.sh"]
 
 FROM node:22-alpine AS node
-
 # Install global packages as root first
 RUN npm install --global cross-env
 
@@ -64,11 +113,11 @@ ARG GROUP_ID=1000
 
 # Create 'appuser' and 'appgroup' only if USER_ID/GROUP_ID are not the default 'node' (1000)
 RUN if [ "$USER_ID" != "1000" ] || [ "$GROUP_ID" != "1000" ]; then \
-      echo "Creating new user appuser ($USER_ID) and group appgroup ($GROUP_ID)" && \
-      addgroup -g ${GROUP_ID} -S appgroup && \
-      adduser -u ${USER_ID} -S appuser -G appgroup; \
+        echo "Creating new user appuser ($USER_ID) and group appgroup ($GROUP_ID)" && \
+        addgroup -g ${GROUP_ID} -S appgroup && \
+        adduser -u ${USER_ID} -S appuser -G appgroup; \
     else \
-      echo "Will use existing node user (UID $USER_ID) and group (GID $GROUP_ID)"; \
+        echo "Will use existing node user (UID $USER_ID) and group (GID $GROUP_ID)"; \
     fi
 
 WORKDIR /var/www/

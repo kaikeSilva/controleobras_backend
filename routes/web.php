@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Api\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,3 +33,6 @@ Route::get('/swagger-ui', function () {
 // Route::get('/websocket-status', [TestController::class, 'getWebSocketStatus'])->name('websocket.status.get');
 // Route::post('/broadcast-test-message', [TestController::class, 'broadcastTestMessage'])->name('websocket.test.message');
 // Route::post('/broadcast-test-notification', [TestController::class, 'broadcastTestNotification'])->name('websocket.test.notification');
+
+// Relatórios PDF
+Route::get('relatorios/gastos', [DashboardController::class, 'relatorio'])->name('relatorio');

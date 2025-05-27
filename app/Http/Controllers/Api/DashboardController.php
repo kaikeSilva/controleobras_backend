@@ -11,9 +11,60 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Spatie\Browsershot\Browsershot;
+use Spatie\LaravelPdf\Facades\Pdf;
 
 class DashboardController extends Controller
 {
+    public function relatorio(Request $request)
+    {
+        // Definir período padrão se não fornecido
+        $dataInicio = $request->get('data_inicio') 
+            ? $request->get('data_inicio')
+            : Carbon::now()->subMonths(6)->startOfMonth()->format('Y-m-d');
+            
+        $dataFim = $request->get('data_fim') 
+            ? $request->get('data_fim')
+            : Carbon::now()->endOfMonth()->format('Y-m-d');
+
+        $filters = $this->validateFilters($request);
+        $data = [
+            'resumo' => $this->getResumoFinanceiro($filters),
+            'evolucao_mensal' => $this->getEvolucaoMensal($filters),
+            'grafico_data' => $this->getGraficoData($filters),
+        ];
+
+        // Buscar gastos detalhados para a tabela
+        $gastos = Gasto::with(['categoriaGasto', 'obra', 'fontePagadora']) // Adicionei fontePagadora
+            ->when(!empty($filters['obras']), fn($q) => $q->whereIn('obra_id', $filters['obras']))
+            ->when(!empty($filters['categorias_gasto']), fn($q) => $q->whereIn('categoria_gasto_id', $filters['categorias_gasto']))
+            ->whereBetween('data_pagamento', [$dataInicio, $dataFim])
+            ->whereNotNull('data_pagamento')
+            ->orderBy('data_pagamento', 'desc')
+            ->get();
+
+        $data['gastos'] = $gastos;
+
+
+        $pdfContent = Browsershot::html(view('reports.gastos', compact(
+            'data'
+        ))->render())
+        ->setChromePath("/usr/bin/google-chrome-stable")
+        ->noSandbox()
+        ->setOption('args', ['--no-sandbox', '--disable-setuid-sandbox'])
+        ->setOption('executablePath', '/usr/bin/google-chrome-stable')
+        ->setOption('env', ['HOME' => '/home/appuser'])
+        ->format('a4')
+        ->timeout(60)
+        ->landscape()
+        ->margins(10, 10, 10, 10)
+        ->pdf(); // This returns the PDF content directly
+        
+        return response($pdfContent)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'attachment; filename="relatorio_gastos_' . now()->format('Y-m-d H:i:s') . '.pdf"');
+    }
+
     /**
      * Retorna os dados do dashboard financeiro
      */

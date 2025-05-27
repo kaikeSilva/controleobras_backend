@@ -64,6 +64,9 @@ if [ "$role" = "app" ]; then
     # Iniciar servidor
     echo "Iniciando servidor na porta $PORT"
     exec php artisan serve --port=$PORT --host=0.0.0.0
+    sudo chown -R appuser:appuser /home
+    mkdir -p /home/appuser/.local/share
+    chown -R appuser:appuser /home/appuser/.local/share
 
 elif [ "$role" = "queue" ]; then
     echo "Iniciando worker de filas..."
