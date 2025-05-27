@@ -20,6 +20,7 @@
     <button id="btn-autocomplete" type="button" style="margin: 0 8px; padding: 8px 20px; border-radius: 6px; border: 1px solid #6B7280; background: #6B7280; color: #fff; font-weight: 600; cursor: pointer;">Autocomplete</button>
     <button id="btn-user" type="button" style="margin: 0 8px; padding: 8px 20px; border-radius: 6px; border: 1px solid #6B7280; background: #6B7280; color: #fff; font-weight: 600; cursor: pointer;">Usuários</button>
     <button id="btn-entrada-recurso" type="button" style="margin: 0 8px; padding: 8px 20px; border-radius: 6px; border: 1px solid #6B7280; background: #6B7280; color: #fff; font-weight: 600; cursor: pointer;">Entrada de Recursos</button>
+    <button id="btn-dashboard" type="button" style="margin: 0 8px; padding: 8px 20px; border-radius: 6px; border: 1px solid #6B7280; background: #6B7280; color: #fff; font-weight: 600; cursor: pointer;">Dashboard</button>
 </div>
 <div id="swagger-ui"></div>
 <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
@@ -33,7 +34,8 @@
         gasto: '{{ url('swagger/gastos.yml') }}',
         autocomplete: '{{ url('swagger/autocomplete.yaml') }}',
         user: '{{ url('swagger/user.yaml') }}',
-        entradaRecurso: '{{ url('swagger/entrada-recurso.yaml') }}'
+        entradaRecurso: '{{ url('swagger/entrada-recurso.yaml') }}',
+        dashboard: '{{ url('swagger/dashboard.yaml') }}'
     };
     let current = 'auth';
     function renderSwagger(fileKey) {
@@ -68,7 +70,8 @@
     document.getElementById('btn-gasto').addEventListener('click', () => renderSwagger('gasto'));
     document.getElementById('btn-autocomplete').addEventListener('click', () => renderSwagger('autocomplete'));
     document.getElementById('btn-user').onclick = () => renderSwagger('user');
-    document.getElementById('btn-entrada-recurso').onclick = () => renderSwagger('entradaRecurso');
+    document.getElementById('btn-entrada-recurso').addEventListener('click', () => renderSwagger('entradaRecurso'));
+    document.getElementById('btn-dashboard').addEventListener('click', () => renderSwagger('dashboard'));
     window.onload = () => renderSwagger('auth');
 </script>
 </body>

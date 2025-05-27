@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\Obra;
 use App\Models\Gasto;
 use App\Models\EntradaRecurso;
@@ -9,6 +10,7 @@ use App\Models\CategoriaGasto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -18,10 +20,10 @@ class DashboardController extends Controller
     public function index(Request $request): JsonResponse
     {
         $filters = $this->validateFilters($request);
-        
         $data = [
             'resumo' => $this->getResumoFinanceiro($filters),
             'evolucao_mensal' => $this->getEvolucaoMensal($filters),
+            'grafico_data' => $this->getGraficoData($filters),
             'filtros_disponiveis' => $this->getFiltrosDisponiveis()
         ];
 
@@ -74,21 +76,112 @@ class DashboardController extends Controller
             ->when(!empty($categorias), fn($q) => $q->whereIn('gastos.categoria_gasto_id', $categorias))
             ->whereBetween('gastos.data_pagamento', [$dataInicio, $dataFim])
             ->whereNotNull('gastos.data_pagamento')
-            ->selectRaw('SUM(gastos.valor * obras.taxa_administracao) as total_faturamento')
+            ->selectRaw('SUM(gastos.valor * (obras.taxa_administracao/100)) as total_faturamento')
             ->value('total_faturamento') ?? 0;
 
         // Saldo Líquido = Entradas + Faturamento - Gastos
         $saldoLiquido = $totalEntradas + $totalFaturamento - $totalGastos;
 
+        // Formatação de valores para exibição
+        $totalGastosFormatado = $this->formatarValor($totalGastos);
+        $totalEntradasFormatado = $this->formatarValor($totalEntradas);
+        $totalFaturamentoFormatado = $this->formatarValor($totalFaturamento);
+        $saldoLiquidoFormatado = $this->formatarValor($saldoLiquido);
+
         return [
-            'total_gastos' => (float) $totalGastos,
-            'total_entradas' => (float) $totalEntradas,
-            'total_faturamento' => (float) $totalFaturamento,
-            'saldo_liquido' => (float) $saldoLiquido,
-            'total_gastos_formatado' => 'R$ ' . number_format($totalGastos, 2, ',', '.'),
-            'total_entradas_formatado' => 'R$ ' . number_format($totalEntradas, 2, ',', '.'),
-            'total_faturamento_formatado' => 'R$ ' . number_format($totalFaturamento, 2, ',', '.'),
-            'saldo_liquido_formatado' => 'R$ ' . number_format($saldoLiquido, 2, ',', '.')
+            // Dados brutos
+            'valores_brutos' => [
+                'total_gastos' => (float) $totalGastos,
+                'total_entradas' => (float) $totalEntradas,
+                'total_faturamento' => (float) $totalFaturamento,
+                'saldo_liquido' => (float) $saldoLiquido,
+            ],
+            
+            // Dados formatados para os cards Vue
+            'cards' => [
+                [
+                    'title' => 'Total Gastos',
+                    'value' => $totalGastosFormatado,
+                    'icon' => 'IconCircleCheck',
+                    'change' => [
+                        'direction' => '↗',
+                        'value' => '+0,0%',
+                        'isPositive' => false
+                    ]
+                ],
+                [
+                    'title' => 'Faturamento',
+                    'value' => $totalFaturamentoFormatado,
+                    'icon' => 'IconMoney',
+                    'change' => [
+                        'direction' => '↗',
+                        'value' => '+0,0%',
+                        'isPositive' => true
+                    ]
+                ],
+                [
+                    'title' => 'Entradas de Recurso',
+                    'value' => $totalEntradasFormatado,
+                    'icon' => 'IconPlus',
+                    'change' => [
+                        'direction' => '↗',
+                        'value' => '+0,0%',
+                        'isPositive' => true
+                    ]
+                ],
+                [
+                    'title' => 'Saldo Líquido',
+                    'value' => $saldoLiquidoFormatado,
+                    'icon' => 'IconCalendar',
+                    'change' => [
+                        'direction' => $saldoLiquido >= 0 ? '↗' : '↘',
+                        'value' => '+0,0%',
+                        'isPositive' => $saldoLiquido >= 0
+                    ]
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Formatar valor monetário
+     */
+    private function formatarValor(float $valor): string
+    {
+        if ($valor >= 1000000) {
+            return 'R$ ' . number_format($valor / 1000000, 1, ',', '.') . 'M';
+        } elseif ($valor >= 1000) {
+            return 'R$ ' . number_format($valor / 1000, 1, ',', '.') . 'K';
+        } else {
+            return 'R$ ' . number_format($valor, 2, ',', '.');
+        }
+    }
+
+    /**
+     * Obtém dados formatados especificamente para o gráfico Chart.js
+     */
+    private function getGraficoData(array $filters): array
+    {
+        $evolucaoMensal = $this->getEvolucaoMensal($filters);
+        
+        if (empty($evolucaoMensal)) {
+            return [
+                'labels' => [],
+                'datasets' => [
+                    'gastos' => [],
+                    'faturamento' => [],
+                    'entradas' => []
+                ]
+            ];
+        }
+
+        return [
+            'labels' => array_map(fn($item) => $item['mes_nome'], $evolucaoMensal),
+            'datasets' => [
+                'gastos' => array_map(fn($item) => $item['gastos'], $evolucaoMensal),
+                'faturamento' => array_map(fn($item) => $item['faturamento'], $evolucaoMensal),
+                'entradas' => array_map(fn($item) => $item['entradas'], $evolucaoMensal)
+            ]
         ];
     }
 
@@ -102,17 +195,34 @@ class DashboardController extends Controller
         $obras = $filters['obras'] ?? [];
         $categorias = $filters['categorias_gasto'] ?? [];
 
+        // Detectar se é SQLite ou MySQL/PostgreSQL
+        $driver = DB::connection()->getDriverName();
+        
+        if ($driver === 'sqlite') {
+            // SQLite usa strftime()
+            $yearSelect = "strftime('%Y', data_pagamento) as ano";
+            $monthSelect = "strftime('%m', data_pagamento) as mes";
+            $yearSelectEntrada = "strftime('%Y', data_entrada) as ano";
+            $monthSelectEntrada = "strftime('%m', data_entrada) as mes";
+        } else {
+            // MySQL/PostgreSQL usa YEAR() e MONTH()
+            $yearSelect = "YEAR(data_pagamento) as ano";
+            $monthSelect = "MONTH(data_pagamento) as mes";
+            $yearSelectEntrada = "YEAR(data_entrada) as ano";
+            $monthSelectEntrada = "MONTH(data_entrada) as mes";
+        }
+
         // Gastos por mês
         $gastosMensais = Gasto::query()
             ->when(!empty($obras), fn($q) => $q->whereIn('obra_id', $obras))
             ->when(!empty($categorias), fn($q) => $q->whereIn('categoria_gasto_id', $categorias))
             ->whereBetween('data_pagamento', [$dataInicio, $dataFim])
             ->whereNotNull('data_pagamento')
-            ->selectRaw('
-                YEAR(data_pagamento) as ano,
-                MONTH(data_pagamento) as mes,
+            ->selectRaw("
+                {$yearSelect},
+                {$monthSelect},
                 SUM(valor) as total
-            ')
+            ")
             ->groupBy('ano', 'mes')
             ->orderBy('ano')
             ->orderBy('mes')
@@ -123,11 +233,11 @@ class DashboardController extends Controller
         $entradasMensais = EntradaRecurso::query()
             ->when(!empty($obras), fn($q) => $q->whereIn('obra_id', $obras))
             ->whereBetween('data_entrada', [$dataInicio, $dataFim])
-            ->selectRaw('
-                YEAR(data_entrada) as ano,
-                MONTH(data_entrada) as mes,
+            ->selectRaw("
+                {$yearSelectEntrada},
+                {$monthSelectEntrada},
                 SUM(valor) as total
-            ')
+            ")
             ->groupBy('ano', 'mes')
             ->orderBy('ano')
             ->orderBy('mes')
@@ -141,11 +251,11 @@ class DashboardController extends Controller
             ->when(!empty($categorias), fn($q) => $q->whereIn('gastos.categoria_gasto_id', $categorias))
             ->whereBetween('gastos.data_pagamento', [$dataInicio, $dataFim])
             ->whereNotNull('gastos.data_pagamento')
-            ->selectRaw('
-                YEAR(gastos.data_pagamento) as ano,
-                MONTH(gastos.data_pagamento) as mes,
-                SUM(gastos.valor * obras.taxa_administracao) as total
-            ')
+            ->selectRaw("
+                {$yearSelect},
+                {$monthSelect},
+                SUM(gastos.valor * (obras.taxa_administracao/100)) as total
+            ")
             ->groupBy('ano', 'mes')
             ->orderBy('ano')
             ->orderBy('mes')
@@ -208,43 +318,6 @@ class DashboardController extends Controller
     }
 
     /**
-     * Endpoint específico para buscar obras (para AJAX)
-     */
-    public function getObras(): JsonResponse
-    {
-        $obras = Obra::select('id', 'nome', 'status', 'data_inicio', 'valor_estimado')
-            ->where('ativo', true)
-            ->orderBy('nome')
-            ->get()
-            ->map(function ($obra) {
-                return [
-                    'id' => $obra->id,
-                    'nome' => $obra->nome,
-                    'status' => $obra->status,
-                    'status_formatado' => Obra::STATUS[$obra->status] ?? $obra->status,
-                    'data_inicio' => $obra->data_inicio?->format('d/m/Y'),
-                    'valor_estimado' => $obra->valor_estimado,
-                    'valor_estimado_formatado' => 'R$ ' . number_format($obra->valor_estimado, 2, ',', '.')
-                ];
-            });
-
-        return response()->json($obras);
-    }
-
-    /**
-     * Endpoint específico para buscar categorias de gasto (para AJAX)
-     */
-    public function getCategoriasGasto(): JsonResponse
-    {
-        $categorias = CategoriaGasto::select('id', 'nome', 'cor', 'descricao')
-            ->where('status', CategoriaGasto::STATUS_ATIVO)
-            ->orderBy('nome')
-            ->get();
-
-        return response()->json($categorias);
-    }
-
-    /**
      * Endpoint para dados resumidos (apenas números dos cards)
      */
     public function getResumo(Request $request): JsonResponse
@@ -294,6 +367,7 @@ class DashboardController extends Controller
             });
 
         return response()->json([
+            'database_driver' => DB::connection()->getDriverName(),
             'filters_aplicados' => $filters,
             'sample_gastos' => $gastosDebug,
             'total_gastos_encontrados' => Gasto::when(!empty($filters['obras']), fn($q) => $q->whereIn('obra_id', $filters['obras']))

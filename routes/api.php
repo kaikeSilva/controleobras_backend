@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\AutocompleteController;
 use App\Http\Controllers\Api\CategoriaGastoController;
 use App\Http\Controllers\Api\GastoController;
 use App\Http\Controllers\Api\EntradaRecursoController;
+use App\Http\Controllers\Api\DashboardController;
 
 Route::apiResource('categorias-gastos', CategoriaGastoController::class)->middleware('auth:sanctum');
 Route::apiResource('gastos', GastoController::class)->middleware('auth:sanctum');
@@ -30,3 +31,11 @@ Route::post('/login', [UserAuthController::class, 'login']);
 Route::post('register',[UserAuthController::class,'register']);
 Route::post('logout',[UserAuthController::class,'logout'])
   ->middleware('auth:sanctum');
+
+// Rotas do Dashboard
+Route::prefix('dashboard')->middleware('auth:sanctum')->group(function () {
+    Route::get('/', [DashboardController::class, 'index']);
+    Route::get('/resumo', [DashboardController::class, 'getResumo']);
+    Route::get('/evolucao', [DashboardController::class, 'getEvolucao']);
+    Route::get('/debug', [DashboardController::class, 'debug']); // Apenas para desenvolvimento
+});

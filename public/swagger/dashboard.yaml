@@ -1,0 +1,289 @@
+openapi: 3.0.3
+info:
+  title: Dashboard API
+  version: '1.0'
+  description: |
+    Endpoints para obtenção de dados do dashboard financeiro.
+    Retorna informações consolidadas sobre gastos, entradas e faturamento.
+servers:
+  - url: /api
+paths:
+  /dashboard:
+    get:
+      summary: Retorna todos os dados do dashboard
+      tags: [Dashboard]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: data_inicio
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Data de início do período (YYYY-MM-DD)
+        - in: query
+          name: data_fim
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Data de fim do período (YYYY-MM-DD)
+        - in: query
+          name: obras[]
+          schema:
+            type: array
+            items:
+              type: integer
+          description: Filtro por IDs de obras
+        - in: query
+          name: categorias_gasto[]
+          schema:
+            type: array
+            items:
+              type: integer
+          description: Filtro por IDs de categorias de gasto
+      responses:
+        '200':
+          description: Dados do dashboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardData'
+  /dashboard/resumo:
+    get:
+      summary: Retorna apenas os cards de resumo
+      tags: [Dashboard]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: data_inicio
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: data_fim
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: obras[]
+          schema:
+            type: array
+            items:
+              type: integer
+        - in: query
+          name: categorias_gasto[]
+          schema:
+            type: array
+            items:
+              type: integer
+      responses:
+        '200':
+          description: Dados resumidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumoFinanceiro'
+  /dashboard/evolucao:
+    get:
+      summary: Retorna dados para o gráfico de evolução mensal
+      tags: [Dashboard]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: data_inicio
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: data_fim
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: obras[]
+          schema:
+            type: array
+            items:
+              type: integer
+        - in: query
+          name: categorias_gasto[]
+          schema:
+            type: array
+            items:
+              type: integer
+      responses:
+        '200':
+          description: Dados de evolução mensal
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EvolucaoMensal'
+  /dashboard/debug:
+    get:
+      summary: Retorna dados de depuração (apenas desenvolvimento)
+      tags: [Dashboard]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: data_inicio
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: data_fim
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: obras[]
+          schema:
+            type: array
+            items:
+              type: integer
+        - in: query
+          name: categorias_gasto[]
+          schema:
+            type: array
+            items:
+              type: integer
+      responses:
+        '200':
+          description: Dados de depuração
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  filters_aplicados:
+                    type: object
+                  sample_gastos:
+                    type: array
+                    items:
+                      type: object
+                  total_gastos_encontrados:
+                    type: integer
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    DashboardData:
+      type: object
+      properties:
+        resumo:
+          $ref: '#/components/schemas/ResumoFinanceiro'
+        evolucao_mensal:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvolucaoMensal'
+        filtros_disponiveis:
+          type: object
+          properties:
+            obras:
+              type: array
+              items:
+                $ref: '#/components/schemas/ObraFiltro'
+            categorias_gasto:
+              type: array
+              items:
+                $ref: '#/components/schemas/CategoriaGastoFiltro'
+    ResumoFinanceiro:
+      type: object
+      properties:
+        total_gastos:
+          type: number
+          format: float
+          example: 15000.50
+        total_entradas:
+          type: number
+          format: float
+          example: 20000.00
+        total_faturamento:
+          type: number
+          format: float
+          example: 3000.10
+        saldo_liquido:
+          type: number
+          format: float
+          example: 8000.60
+        total_gastos_formatado:
+          type: string
+          example: "R$ 15.000,50"
+        total_entradas_formatado:
+          type: string
+          example: "R$ 20.000,00"
+        total_faturamento_formatado:
+          type: string
+          example: "R$ 3.000,10"
+        saldo_liquido_formatado:
+          type: string
+          example: "R$ 8.000,60"
+    EvolucaoMensal:
+      type: object
+      properties:
+        mes:
+          type: string
+          example: "2024-01"
+        mes_nome:
+          type: string
+          example: "janeiro"
+        mes_ano:
+          type: string
+          example: "Jan/2024"
+        ano:
+          type: integer
+          example: 2024
+        gastos:
+          type: number
+          format: float
+          example: 5000.00
+        entradas:
+          type: number
+          format: float
+          example: 10000.00
+        faturamento:
+          type: number
+          format: float
+          example: 1000.50
+    ObraFiltro:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        nome:
+          type: string
+          example: "Obra Exemplo"
+        status:
+          type: string
+          example: "em_andamento"
+        status_formatado:
+          type: string
+          example: "Em Andamento"
+    CategoriaGastoFiltro:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        nome:
+          type: string
+          example: "Material de Construção"
+        cor:
+          type: string
+          example: "#FF0000"
