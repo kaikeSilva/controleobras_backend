@@ -130,8 +130,8 @@ class DashboardController extends Controller
             ->selectRaw('SUM(gastos.valor * (obras.taxa_administracao/100)) as total_faturamento')
             ->value('total_faturamento') ?? 0;
 
-        // Saldo Líquido = Entradas + Faturamento - Gastos
-        $saldoLiquido = $totalEntradas + $totalFaturamento - $totalGastos;
+        // Saldo Líquido = Entradas - Gastos
+        $saldoLiquido = $totalEntradas - $totalGastos;
 
         // Formatação de valores para exibição
         $totalGastosFormatado = $this->formatarValor($totalGastos);
@@ -154,41 +154,41 @@ class DashboardController extends Controller
                     'title' => 'Total Gastos',
                     'value' => $totalGastosFormatado,
                     'icon' => 'IconCircleCheck',
-                    'change' => [
-                        'direction' => '↗',
-                        'value' => '+0,0%',
-                        'isPositive' => false
-                    ]
+                    // 'change' => [
+                    //     'direction' => '↗',
+                    //     'value' => '+0,0%',
+                    //     'isPositive' => false
+                    // ]
                 ],
                 [
                     'title' => 'Faturamento',
                     'value' => $totalFaturamentoFormatado,
                     'icon' => 'IconMoney',
-                    'change' => [
-                        'direction' => '↗',
-                        'value' => '+0,0%',
-                        'isPositive' => true
-                    ]
+                    // 'change' => [
+                    //     'direction' => '↗',
+                    //     'value' => '+0,0%',
+                    //     'isPositive' => true
+                    // ]
                 ],
                 [
                     'title' => 'Entradas de Recurso',
                     'value' => $totalEntradasFormatado,
                     'icon' => 'IconPlus',
-                    'change' => [
-                        'direction' => '↗',
-                        'value' => '+0,0%',
-                        'isPositive' => true
-                    ]
+                    // 'change' => [
+                    //     'direction' => '↗',
+                    //     'value' => '+0,0%',
+                    //     'isPositive' => true
+                    // ]
                 ],
                 [
-                    'title' => 'Saldo Líquido',
+                    'title' => 'Caixa',
                     'value' => $saldoLiquidoFormatado,
                     'icon' => 'IconCalendar',
-                    'change' => [
-                        'direction' => $saldoLiquido >= 0 ? '↗' : '↘',
-                        'value' => '+0,0%',
-                        'isPositive' => $saldoLiquido >= 0
-                    ]
+                    // 'change' => [
+                    //     'direction' => $saldoLiquido >= 0 ? '↗' : '↘',
+                    //     'value' => '+0,0%',
+                    //     'isPositive' => $saldoLiquido >= 0
+                    // ]
                 ]
             ]
         ];
@@ -199,13 +199,9 @@ class DashboardController extends Controller
      */
     private function formatarValor(float $valor): string
     {
-        if ($valor >= 1000000) {
-            return 'R$ ' . number_format($valor / 1000000, 1, ',', '.') . 'M';
-        } elseif ($valor >= 1000) {
-            return 'R$ ' . number_format($valor / 1000, 1, ',', '.') . 'K';
-        } else {
-            return 'R$ ' . number_format($valor, 2, ',', '.');
-        }
+        // valor formatado deve ser mostrado no formato R$ 1.000,00
+        $valor = number_format($valor, 2, ',', '.');
+        return 'R$ ' . $valor;
     }
 
     /**

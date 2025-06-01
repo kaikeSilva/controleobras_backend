@@ -39,3 +39,6 @@ Route::prefix('dashboard')->middleware('auth:sanctum')->group(function () {
     Route::get('/evolucao', [DashboardController::class, 'getEvolucao']);
     Route::get('/debug', [DashboardController::class, 'debug']); // Apenas para desenvolvimento
 });
+
+// Relatórios PDF
+Route::get('relatorios/gastos', [DashboardController::class, 'relatorio'])->name('relatorio');

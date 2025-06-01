@@ -7,6 +7,7 @@ use App\Http\Resources\GastoResource;
 use App\Models\Gasto;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class GastoController extends Controller
 {
@@ -49,6 +50,11 @@ class GastoController extends Controller
                 $query->where('obra_id', $filters['obra_id']);
             }
 
+            // Filtro por obras
+            if (!empty($filters['obras'])) {
+                $query->whereIn('obra_id', $filters['obras']);
+            }
+
             // Filtro por categoria_gasto_id
             if (!empty($filters['categoria_gasto_id'])) {
                 $query->where('categoria_gasto_id', $filters['categoria_gasto_id']);
@@ -89,7 +95,10 @@ class GastoController extends Controller
             }
 
             if (!empty($filters['data_inicio']) && !empty($filters['data_fim'])) {
-                $query->whereBetween('data_pagamento', [$filters['data_inicio'], $filters['data_fim']]);
+                $dataInicio = Carbon::parse($filters['data_inicio'])->startOfDay();
+                $dataFim = Carbon::parse($filters['data_fim'])->endOfDay();
+                $query->whereNotNull('data_pagamento')
+                      ->whereBetween('data_pagamento', [$dataInicio, $dataFim]);
             }
         }
 
@@ -99,6 +108,10 @@ class GastoController extends Controller
         $query->orderBy($sortField, $sortDirection);
 
         // Paginação
+        if ($request->has('per_page') && $request->input('per_page') == 'all') {
+            return GastoResource::collection($query->get());
+        }
+
         $perPage = $request->input('per_page', 15);
         return GastoResource::collection($query->paginate($perPage));
     }

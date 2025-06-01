@@ -34,5 +34,3 @@ Route::get('/swagger-ui', function () {
 // Route::post('/broadcast-test-message', [TestController::class, 'broadcastTestMessage'])->name('websocket.test.message');
 // Route::post('/broadcast-test-notification', [TestController::class, 'broadcastTestNotification'])->name('websocket.test.notification');
 
-// Relatórios PDF
-Route::get('relatorios/gastos', [DashboardController::class, 'relatorio'])->name('relatorio');
