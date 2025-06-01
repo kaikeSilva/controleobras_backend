@@ -13,6 +13,12 @@ paths:
       tags: [Autocomplete]
       security:
         - bearerAuth: []
+      parameters:
+        - in: query
+          name: cliente_id
+          schema:
+            type: integer
+          description: Filtrar por ID do cliente
       responses:
         '200':
           description: Lista de fontes pagadoras (id, nome)
@@ -27,8 +33,380 @@ paths:
                       $ref: '#/components/schemas/AutocompleteItem'
                   links:
                     type: object
+                    properties:
+                      first:
+                        type: string
+                        format: url
+                        nullable: true
+                      last:
+                        type: string
+                        format: url
+                        nullable: true
+                      prev:
+                        type: string
+                        format: url
+                        nullable: true
+                      next:
+                        type: string
+                        format: url
+                        nullable: true
                   meta:
                     type: object
+                    properties:
+                      current_page:
+                        type: integer
+                      from:
+                        type: integer
+                        nullable: true
+                      last_page:
+                        type: integer
+                      links:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            url:
+                              type: string
+                              format: url
+                              nullable: true
+                            label:
+                              type: string
+                            active:
+                              type: boolean
+                      path:
+                        type: string
+                        format: url
+                      per_page:
+                        type: integer
+                      to:
+                        type: integer
+                        nullable: true
+                      total:
+                        type: integer
+  /autocomplete/categorias-gastos:
+    get:
+      summary: Lista de categorias de gastos para autocomplete
+      tags: [Autocomplete]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: cliente_id
+          schema:
+            type: integer
+          description: Filtrar por ID do cliente (retorna categorias do cliente e globais)
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Termo de busca para nome ou descrição da categoria
+      responses:
+        '200':
+          description: Lista de categorias de gastos (id, nome)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AutocompleteItem'
+                  links:
+                    type: object
+                    properties:
+                      first:
+                        type: string
+                        format: url
+                        nullable: true
+                      last:
+                        type: string
+                        format: url
+                        nullable: true
+                      prev:
+                        type: string
+                        format: url
+                        nullable: true
+                      next:
+                        type: string
+                        format: url
+                        nullable: true
+                  meta:
+                    type: object
+                    properties:
+                      current_page:
+                        type: integer
+                      from:
+                        type: integer
+                        nullable: true
+                      last_page:
+                        type: integer
+                      links:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            url:
+                              type: string
+                              format: url
+                              nullable: true
+                            label:
+                              type: string
+                            active:
+                              type: boolean
+                      path:
+                        type: string
+                        format: url
+                      per_page:
+                        type: integer
+                      to:
+                        type: integer
+                        nullable: true
+                      total:
+                        type: integer
+  /autocomplete/clientes:
+    get:
+      summary: Lista de clientes para autocomplete
+      tags: [Autocomplete]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Termo de busca para nome ou email do cliente
+      responses:
+        '200':
+          description: Lista de clientes (id, nome)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AutocompleteItem'
+                  links:
+                    type: object
+                    properties:
+                      first:
+                        type: string
+                        format: url
+                        nullable: true
+                      last:
+                        type: string
+                        format: url
+                        nullable: true
+                      prev:
+                        type: string
+                        format: url
+                        nullable: true
+                      next:
+                        type: string
+                        format: url
+                        nullable: true
+                  meta:
+                    type: object
+                    properties:
+                      current_page:
+                        type: integer
+                      from:
+                        type: integer
+                        nullable: true
+                      last_page:
+                        type: integer
+                      links:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            url:
+                              type: string
+                              format: url
+                              nullable: true
+                            label:
+                              type: string
+                            active:
+                              type: boolean
+                      path:
+                        type: string
+                        format: url
+                      per_page:
+                        type: integer
+                      to:
+                        type: integer
+                        nullable: true
+                      total:
+                        type: integer
+  /autocomplete/obras:
+    get:
+      summary: Lista de obras para autocomplete
+      tags: [Autocomplete]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: cliente_id
+          schema:
+            type: integer
+          description: Filtrar por ID do cliente
+      responses:
+        '200':
+          description: Lista de obras (id, nome)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AutocompleteItem'
+                  links:
+                    type: object
+                    properties:
+                      first:
+                        type: string
+                        format: url
+                        nullable: true
+                      last:
+                        type: string
+                        format: url
+                        nullable: true
+                      prev:
+                        type: string
+                        format: url
+                        nullable: true
+                      next:
+                        type: string
+                        format: url
+                        nullable: true
+                  meta:
+                    type: object
+                    properties:
+                      current_page:
+                        type: integer
+                      from:
+                        type: integer
+                        nullable: true
+                      last_page:
+                        type: integer
+                      links:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            url:
+                              type: string
+                              format: url
+                              nullable: true
+                            label:
+                              type: string
+                            active:
+                              type: boolean
+                      path:
+                        type: string
+                        format: url
+                      per_page:
+                        type: integer
+                      to:
+                        type: integer
+                        nullable: true
+                      total:
+                        type: integer
+  /autocomplete/gastos:
+    get:
+      summary: Lista de gastos para autocomplete
+      tags: [Autocomplete]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Termo de busca para descrição, número do documento, obra, categoria ou fonte pagadora
+        - in: query
+          name: obra_id
+          schema:
+            type: integer
+          description: Filtrar por ID da obra
+        - in: query
+          name: categoria_gasto_id
+          schema:
+            type: integer
+          description: Filtrar por ID da categoria de gasto
+        - in: query
+          name: fonte_pagadora_id
+          schema:
+            type: integer
+          description: Filtrar por ID da fonte pagadora
+      responses:
+        '200':
+          description: Lista de gastos (id, nome)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AutocompleteItem'
+                  links:
+                    type: object
+                    properties:
+                      first:
+                        type: string
+                        format: url
+                        nullable: true
+                      last:
+                        type: string
+                        format: url
+                        nullable: true
+                      prev:
+                        type: string
+                        format: url
+                        nullable: true
+                      next:
+                        type: string
+                        format: url
+                        nullable: true
+                  meta:
+                    type: object
+                    properties:
+                      current_page:
+                        type: integer
+                      from:
+                        type: integer
+                        nullable: true
+                      last_page:
+                        type: integer
+                      links:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            url:
+                              type: string
+                              format: url
+                              nullable: true
+                            label:
+                              type: string
+                            active:
+                              type: boolean
+                      path:
+                        type: string
+                        format: url
+                      per_page:
+                        type: integer
+                      to:
+                        type: integer
+                        nullable: true
+                      total:
+                        type: integer
   /autocomplete/entradas-recursos:
     get:
       summary: Lista de entradas de recursos para autocomplete
@@ -65,23 +443,62 @@ paths:
               schema:
                 type: object
                 properties:
-                  results:
+                  data:
                     type: array
                     items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        text:
-                          type: string
-                        data:
-                          $ref: '../entrada-recurso.yaml#/components/schemas/EntradaRecursoResource'
-                  pagination:
+                      $ref: '#/components/schemas/AutocompleteItem'
+                  links:
                     type: object
                     properties:
-                      more:
-                        type: boolean
-                        description: Indica se existem mais páginas de resultados
+                      first:
+                        type: string
+                        format: url
+                        nullable: true
+                      last:
+                        type: string
+                        format: url
+                        nullable: true
+                      prev:
+                        type: string
+                        format: url
+                        nullable: true
+                      next:
+                        type: string
+                        format: url
+                        nullable: true
+                  meta:
+                    type: object
+                    properties:
+                      current_page:
+                        type: integer
+                      from:
+                        type: integer
+                        nullable: true
+                      last_page:
+                        type: integer
+                      links:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            url:
+                              type: string
+                              format: url
+                              nullable: true
+                            label:
+                              type: string
+                            active:
+                              type: boolean
+                      path:
+                        type: string
+                        format: url
+                      per_page:
+                        type: integer
+                      to:
+                        type: integer
+                        nullable: true
+                      total:
+                        type: integer
 
 components:
   securitySchemes:

@@ -3,12 +3,15 @@ info:
   title: API de Entrada de Recursos
   description: API para gerenciamento de entradas de recursos financeiros das obras
   version: 1.0.0
-
+servers: # Added servers block
+  - url: /api
 paths:
-  /api/entradas-recursos:
+  /entradas-recursos: # Adjusted path
     get:
       tags: [EntradaRecursos]
       summary: Lista todas as entradas de recursos
+      security: # Added security
+        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/per_page'
@@ -52,6 +55,18 @@ paths:
           schema:
             type: string
             format: date
+        - name: filter[valor_min] # Added valor_min filter
+          in: query
+          description: Valor mínimo para filtro de range
+          schema:
+            type: number
+            format: float
+        - name: filter[valor_max] # Added valor_max filter
+          in: query
+          description: Valor máximo para filtro de range
+          schema:
+            type: number
+            format: float
       responses:
         '200':
           description: Lista de entradas de recursos
@@ -62,8 +77,11 @@ paths:
     post:
       tags: [EntradaRecursos]
       summary: Cria uma nova entrada de recurso
+      security: # Added security
+        - bearerAuth: []
       requestBody:
         required: true
+        description: "Dados da entrada de recurso para atualização. Todos os campos são opcionais devido à lógica 'sometimes' no backend. Forneça apenas os campos que deseja alterar." # Updated description
         content:
           application/json:
             schema:
@@ -82,12 +100,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/ValidationError'
 
-  /api/entradas-recursos/{id}:
+  /entradas-recursos/{id}: # Adjusted path
     parameters:
       - $ref: '#/components/parameters/id'
     get:
       tags: [EntradaRecursos]
       summary: Exibe os detalhes de uma entrada de recurso
+      security: # Added security
+        - bearerAuth: []
       responses:
         '200':
           description: Detalhes da entrada de recurso
@@ -104,6 +124,8 @@ paths:
     put:
       tags: [EntradaRecursos]
       summary: Atualiza uma entrada de recurso existente
+      security: # Added security
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -132,6 +154,8 @@ paths:
     delete:
       tags: [EntradaRecursos]
       summary: Remove uma entrada de recurso
+      security: # Added security
+        - bearerAuth: []
       responses:
         '200':
           description: Entrada de recurso removida com sucesso
@@ -150,57 +174,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/NotFoundError'
 
-  /api/autocomplete/entradas-recursos:
-    get:
-      tags: [Autocomplete]
-      summary: Busca de entradas de recursos para autocomplete
-      parameters:
-        - name: search
-          in: query
-          description: Termo para busca
-          schema:
-            type: string
-        - name: obra_id
-          in: query
-          description: Filtrar por ID da obra
-          schema:
-            type: integer
-        - name: fonte_pagadora_id
-          in: query
-          description: Filtrar por ID da fonte pagadora
-          schema:
-            type: integer
-        - name: tipo_entrada
-          in: query
-          description: Filtrar por tipo de entrada (aporte_inicial, aporte_adicional, reembolso, regular)
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Lista de entradas de recursos para autocomplete
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  results:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        text:
-                          type: string
-                        data:
-                          $ref: '#/components/schemas/EntradaRecursoResource'
-                  pagination:
-                    type: object
-                    properties:
-                      more:
-                        type: boolean
-
 components:
+  securitySchemes: # Added securitySchemes
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     EntradaRecursoResource:
       type: object
@@ -232,20 +211,16 @@ components:
             nome:
               type: string
               example: 'Banco do Brasil'
-        valor:
+        valor: # Corrected type
           type: number
           format: float
           example: 5000.00
-        valor_formatado:
-          type: string
-          example: 'R$ 5.000,00'
-        data_entrada:
+        # valor_formatado removed
+        data_entrada: # Corrected type
           type: string
           format: date
           example: '2023-05-26'
-        data_entrada_formatada:
-          type: string
-          example: '26/05/2023'
+        # data_entrada_formatada removed
         descricao:
           type: string
           example: 'Aporte inicial para início das obras'
@@ -258,32 +233,25 @@ components:
           type: string
           enum: [aporte_inicial, aporte_adicional, reembolso, regular]
           example: 'aporte_inicial'
-        tipo_entrada_formatado:
-          type: string
-          example: 'Aporte Inicial'
-        created_at:
+        # tipo_entrada_formatado removed
+        created_at: # Corrected type
           type: string
           format: date-time
+          nullable: true # As per typical Laravel resource, can be null on creation before save
           example: '2023-05-26T14:30:00Z'
-        created_at_formatado:
-          type: string
-          example: '26/05/2023 11:30:00'
-        updated_at:
+        # created_at_formatado removed
+        updated_at: # Corrected type
           type: string
           format: date-time
+          nullable: true # As per typical Laravel resource
           example: '2023-05-26T14:30:00Z'
-        updated_at_formatado:
-          type: string
-          example: '26/05/2023 11:30:00'
-        deleted_at:
+        # updated_at_formatado removed
+        deleted_at: # Corrected type
           type: string
           format: date-time
           nullable: true
           example: null
-        deleted_at_formatado:
-          type: string
-          nullable: true
-          example: null
+        # deleted_at_formatado removed
 
     EntradaRecursoCollection:
       type: object
@@ -333,3 +301,115 @@ components:
           enum: [aporte_inicial, aporte_adicional, reembolso, regular]
           default: 'regular'
           example: 'aporte_inicial'
+    NotFoundError: # Added NotFoundError schema
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Recurso não encontrado."
+    ValidationError: # Added ValidationError schema
+      type: object
+      properties:
+        message:
+          type: string
+          example: "The given data was invalid."
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            valor: ["The valor field must be at least 0.01."]
+    PaginationLinks: # Added PaginationLinks schema
+      type: object
+      properties:
+        first:
+          type: string
+          format: url
+          nullable: true
+        last:
+          type: string
+          format: url
+          nullable: true
+        prev:
+          type: string
+          format: url
+          nullable: true
+        next:
+          type: string
+          format: url
+          nullable: true
+    PaginationMeta: # Added PaginationMeta schema
+      type: object
+      properties:
+        current_page:
+          type: integer
+        from:
+          type: integer
+          nullable: true
+        last_page:
+          type: integer
+        links:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                format: url
+                nullable: true
+              label:
+                type: string
+              active:
+                type: boolean
+        path:
+          type: string
+          format: url
+        per_page:
+          type: integer
+        to:
+          type: integer
+          nullable: true
+        total:
+          type: integer
+  parameters: # Added common parameters
+    id:
+      name: id
+      in: path
+      required: true
+      description: ID do recurso
+      schema:
+        type: integer
+    page:
+      name: page
+      in: query
+      description: Número da página
+      schema:
+        type: integer
+        default: 1
+    per_page:
+      name: per_page
+      in: query
+      description: Itens por página
+      schema:
+        type: integer
+        default: 15
+    sort:
+      name: sort
+      in: query
+      description: Campo para ordenação
+      required: false
+      schema:
+        type: string
+        default: data_entrada
+        enum: [data_entrada, descricao, valor, tipo_entrada, order_id, fonte_pagadora_id]
+    direction:
+      name: direction
+      in: query
+      description: Direção da ordenação (ascendente ou descendente)
+      required: false
+      schema:
+        type: string
+        default: desc
+        enum: [asc, desc]
