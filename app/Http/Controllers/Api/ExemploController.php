@@ -15,41 +15,55 @@ class ExemploController extends Controller
      */
     public function index(Request $request)
     {
+        $filter = [];
+        if ($request->has('filter')) {
+            $filter = $request->input('filter');
+        } else {
+            $filter = $request->all();
+        }
         $query = Exemplo::query();
 
         // Filtros
-        if ($request->has('filter')) {
-            $filters = $request->input('filter');
-
+        if ($filter) {
             // Filtro por ID (exato)
-            if (!empty($filters['id'])) {
-                $query->where('id', $filters['id']);
+            if (!empty($filter['id'])) {
+                $query->where('id', $filter['id']);
             }
 
             // Filtro por nome (LIKE)
-            if (!empty($filters['nome'])) {
-                $query->where('nome', 'LIKE', '%' . $filters['nome'] . '%');
+            if (!empty($filter['nome'])) {
+                $query->where('nome', 'LIKE', '%' . $filter['nome'] . '%');
             }
 
             // Filtro por status (exato)
-            if (isset($filters['status']) && $filters['status'] !== '') {
-                $query->where('status', $filters['status']);
+            if (isset($filter['status']) && $filter['status'] !== '') {
+                $query->where('status', $filter['status']);
             }
 
             // Filtro geral 'busca' (LIKE em nome)
-            if (!empty($filters['busca'])) {
-                $query->where(function($q) use ($filters) {
-                    $q->where('nome', 'LIKE', '%' . $filters['busca'] . '%');
+            if (!empty($filter['busca'])) {
+                $query->where(function($q) use ($filter) {
+                    $q->where('nome', 'LIKE', '%' . $filter['busca'] . '%');
                 });
             }
 
             // Filtros por data
-            $dateFields = ['created_at', 'updated_at'];
+            $dateFields = ['created_at', 'updated_at', 'deleted_at'];
             foreach ($dateFields as $field) {
-                if (!empty($filters[$field])) {
-                    $query->whereDate($field, $filters[$field]);
+                if (!empty($filter[$field])) {
+                    $query->whereDate($field, $filter[$field]);
                 }
             }
+
+            if (!empty($filter['created_at_inicio']) && !empty($filter['created_at_fim'])) {
+                $query->whereBetween('created_at', [$filter['created_at_inicio'], $filter['created_at_fim']]);
+            }
+
+            // exemplos is a array of ids
+            if (!empty($filter['exemplos'])) {
+                $query->whereIn('id', $filter['exemplos']);
+            }
+            
         }
 
         // Ordenação
