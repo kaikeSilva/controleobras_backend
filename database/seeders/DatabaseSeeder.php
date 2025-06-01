@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             \Database\Seeders\FontePagadoraSeeder::class,
             \Database\Seeders\GastoSeeder::class,
             \Database\Seeders\EntradaRecursoSeeder::class,
+            \Database\Seeders\ExemploSeeder::class,
         ]);
     }
 }

@@ -11,6 +11,7 @@ use App\Models\Cliente;
 use App\Models\CategoriaGasto;
 use App\Models\Gasto;
 use App\Models\EntradaRecurso;
+use App\Models\Exemplo;
 use App\Http\Resources\AutocompleteResource;
 
 class AutocompleteController extends Controller
@@ -187,5 +188,27 @@ class AutocompleteController extends Controller
         // Formata os resultados para o formato esperado pelo select2 (se estiver usando)
         $results = $query->get();
         return AutocompleteResource::collection($results);
+    }
+    
+    /**
+     * Retorna lista de exemplos para autocomplete/select.
+     */
+    public function exemplos()
+    {
+        $query = Exemplo::query();
+
+        if (request()->has('search')) {
+            $search = request('search');
+            $query->where(function($q) use ($search) {
+                $q->where('nome', 'LIKE', "%{$search}%");
+            });
+        }
+
+        if (request()->has('status')) {
+            $query->where('status', request('status'));
+        }
+
+        $exemplos = $query->orderBy('nome')->get();
+        return AutocompleteResource::collection($exemplos);
     }
 }

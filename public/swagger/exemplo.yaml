@@ -1,0 +1,321 @@
+openapi: 3.0.3
+info:
+  title: API de Exemplos
+  description: API REST para CRUD de exemplos usando Laravel
+  version: 1.0.0
+servers:
+  - url: /api # Standardized server URL
+paths:
+  /exemplos:
+    get:
+      summary: Lista exemplos
+      tags:
+        - Exemplos
+      security: # Added security
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: filter[busca]
+          schema:
+            type: string
+          description: Busca geral por nome
+        - in: query
+          name: filter[nome]
+          schema:
+            type: string
+          description: Filtra por nome
+        - in: query
+          name: filter[status]
+          schema:
+            type: string
+            enum: [ativo, inativo]
+          description: Filtra por status
+        - in: query
+          name: sort_by
+          schema:
+            type: string
+            enum: [id, nome, status, created_at, updated_at]
+          description: Campo para ordenação
+        - in: query
+          name: direction
+          schema:
+            type: string
+            enum: [asc, desc]
+          description: Direção da ordenação
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+          description: Itens por página
+        - in: query
+          name: filter[id]
+          schema:
+            type: integer
+          description: Filtrar por ID exato do exemplo
+        - in: query
+          name: filter[created_at]
+          schema:
+            type: string
+            format: date
+          description: "Filtrar por data de criação (YYYY-MM-DD)"
+        - in: query
+          name: filter[updated_at]
+          schema:
+            type: string
+            format: date
+          description: "Filtrar por data de atualização (YYYY-MM-DD)"
+      responses:
+        '200':
+          description: Lista paginada de exemplos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExemploPaginatedResponse'
+    post:
+      summary: Cria um novo exemplo
+      tags:
+        - Exemplos
+      security: # Added security
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExemploRequest'
+      responses:
+        '201':
+          description: Exemplo criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exemplo'
+        '422':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+  /exemplos/{id}:
+    get:
+      summary: Busca exemplo por ID
+      tags:
+        - Exemplos
+      security: # Added security
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Exemplo encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exemplo'
+        '404':
+          description: Exemplo não encontrado
+    put:
+      summary: Atualiza exemplo
+      tags:
+        - Exemplos
+      security: # Added security
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExemploRequest'
+      responses:
+        '200':
+          description: Exemplo atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exemplo'
+        '422':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: Exemplo não encontrado
+    delete:
+      summary: Remove um exemplo
+      tags:
+        - Exemplos
+      security: # Added security
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID do exemplo
+      responses:
+        '204':
+          description: Exemplo removido com sucesso
+        '404':
+          description: Exemplo não encontrado
+  /autocomplete/exemplos:
+    get:
+      summary: Lista exemplos para autocomplete
+      tags:
+        - Autocomplete
+        - Exemplos
+      security: # Added security
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Termo de busca para filtrar por nome
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [ativo, inativo]
+          description: Filtrar por status
+      responses:
+        '200':
+          description: Lista de exemplos para autocomplete
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AutocompleteItem'
+components:
+  schemas:
+    Exemplo:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        nome:
+          type: string
+          example: "Exemplo 1"
+        status:
+          type: string
+          enum: [ativo, inativo]
+          example: "ativo"
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-06-01T15:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2025-06-01T15:00:00Z'
+    ExemploRequest:
+      type: object
+      properties:
+        nome:
+          type: string
+          example: "Exemplo 1"
+        status:
+          type: string
+          enum: [ativo, inativo]
+          example: "ativo"
+      required:
+        - nome
+    ExemploPaginatedResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Exemplo'
+        links:
+          type: object
+          properties:
+            first:
+              type: string
+              example: "http://localhost/api/exemplos?page=1"
+            last:
+              type: string
+              example: "http://localhost/api/exemplos?page=1"
+            prev:
+              type: string
+              nullable: true
+              example: null
+            next:
+              type: string
+              nullable: true
+              example: null
+        meta:
+          type: object
+          properties:
+            current_page:
+              type: integer
+              example: 1
+            from:
+              type: integer
+              example: 1
+            last_page:
+              type: integer
+              example: 1
+            links:
+              type: array
+              items:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    nullable: true
+                    example: "http://localhost/api/exemplos?page=1"
+                  label:
+                    type: string
+                    example: "1"
+                  active:
+                    type: boolean
+                    example: true
+            path:
+              type: string
+              example: "http://localhost/api/exemplos"
+            per_page:
+              type: integer
+              example: 15
+            to:
+              type: integer
+              example: 3
+            total:
+              type: integer
+              example: 3
+    AutocompleteItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        nome:
+          type: string
+          example: "Exemplo 1"
+    ValidationError:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Já existe um exemplo com este nome."
+        errors:
+          type: object
+          properties:
+            nome:
+              type: array
+              items:
+                type: string
+              example: ["Já existe um exemplo com este nome."]
