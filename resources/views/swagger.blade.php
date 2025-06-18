@@ -26,16 +26,16 @@
 <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
 <script>
     const files = {
-        auth: '{{ url('swagger/authentication.yaml') }}',
-        client: '{{ url('swagger/client.yaml') }}',
-        fonte: '{{ url('swagger/fonte-pagadora.yaml') }}',
-        obra: '{{ url('swagger/obra.yaml') }}',
-        categoriaGasto: '{{ url('swagger/categoria-gasto.yaml') }}',
-        gasto: '{{ url('swagger/gastos.yml') }}',
-        autocomplete: '{{ url('swagger/autocomplete.yaml') }}',
-        user: '{{ url('swagger/user.yaml') }}',
-        entradaRecurso: '{{ url('swagger/entrada-recurso.yaml') }}',
-        dashboard: '{{ url('swagger/dashboard.yaml') }}'
+        auth: '{{ secure_url('swagger/authentication.yaml') }}',
+        client: '{{ secure_url('swagger/client.yaml') }}',
+        fonte: '{{ secure_url('swagger/fonte-pagadora.yaml') }}',
+        obra: '{{ secure_url('swagger/obra.yaml') }}',
+        categoriaGasto: '{{ secure_url('swagger/categoria-gasto.yaml') }}',
+        gasto: '{{ secure_url('swagger/gastos.yml') }}',
+        autocomplete: '{{ secure_url('swagger/autocomplete.yaml') }}',
+        user: '{{ secure_url('swagger/user.yaml') }}',
+        entradaRecurso: '{{ secure_url('swagger/entrada-recurso.yaml') }}',
+        dashboard: '{{ secure_url('swagger/dashboard.yaml') }}'
     };
     let current = 'auth';
     function renderSwagger(fileKey) {
