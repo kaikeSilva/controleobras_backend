@@ -17,14 +17,23 @@ services:
     working_dir: /var/www/
     volumes:
       - ./:/var/www
-    ports:
-      - "8000:8000"
     depends_on:
       - db
       - redis
       - node
       - websocket
     restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.controleobrasbackend-http.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.controleobrasbackend-http.entrypoints=http
+      - traefik.http.routers.controleobrasbackend-http.middlewares=https-redirect
+      - traefik.http.routers.controleobrasbackend-https.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.controleobrasbackend-https.entrypoints=https
+      - traefik.http.routers.controleobrasbackend-https.tls=true
+      - traefik.http.routers.controleobrasbackend-https.tls.certresolver=le
+      - traefik.http.routers.controleobrasbackend-https.service=controleobrasbackend-service
+      - traefik.http.services.controleobrasbackend-service.loadbalancer.server.port=8000
     healthcheck:
       test: ["CMD", "pgrep", "-f", "artisan serve"]
       interval: 30s
@@ -216,3 +225,8 @@ services:
 volumes:
   db_data: ~
   redis_data: ~
+
+networks:
+  default:
+    name: traefik-public
+    external: true
