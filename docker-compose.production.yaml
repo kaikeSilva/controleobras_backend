@@ -1,0 +1,175 @@
+version: '3.8'
+
+services:
+  php:
+    container_name: php
+    image: docker-laravel-app
+    build:
+      context: .
+      target: php
+      args:
+        - APP_ENV=${APP_ENV}
+        - USER_ID=${USER_ID:-1000}
+        - GROUP_ID=${GROUP_ID:-1000}
+    environment:
+      - APP_ENV=${APP_ENV}
+      - CONTAINER_ROLE=app
+    working_dir: /var/www/
+    volumes:
+      - ./:/var/www
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+      - node
+      - websocket
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "artisan serve"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  websocket:
+    container_name: websocket
+    image: docker-laravel-websocket
+    build:
+      context: .
+      target: php
+      args:
+        - APP_ENV=${APP_ENV}
+        - USER_ID=${USER_ID:-1000}
+        - GROUP_ID=${GROUP_ID:-1000}
+    environment:
+      - APP_ENV=${APP_ENV}
+      - CONTAINER_ROLE=websocket
+    working_dir: /var/www/
+    volumes:
+      - ./:/var/www/
+    ports:
+      - "6001:6001"
+    tty: true
+    depends_on:
+      - db
+      - redis
+      - node
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "6001"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  db:
+    container_name: db
+    image: mysql:5.7
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_DATABASE=${DB_DATABASE}
+      - MYSQL_USER=${DB_USERNAME}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    container_name: redis
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${DB_PASSWORD}"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${DB_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  queue:
+    container_name: queue
+    image: docker-laravel-queue
+    build:
+      context: .
+      target: php
+      args:
+        - APP_ENV=${APP_ENV}
+        - USER_ID=${USER_ID:-1000}
+        - GROUP_ID=${GROUP_ID:-1000}
+    environment:
+      - APP_ENV=${APP_ENV}
+      - CONTAINER_ROLE=queue
+    working_dir: /var/www/
+    volumes:
+      - ./:/var/www/
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+    mem_limit: 512m
+    memswap_limit: 512m
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "queue:work"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+
+  node:
+    container_name: node
+    image: docker-laravel-node
+    build:
+      context: .
+      target: node
+      args:
+        - USER_ID=${USER_ID:-1000}
+        - GROUP_ID=${GROUP_ID:-1000}
+    working_dir: /var/www/
+    volumes:
+      - ./:/var/www
+    ports:
+      - "5173:5173"
+    command: npx vite --debug hmr --host # Correctly invoke Vite with npx
+    tty: true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "--version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+  
+  # Serviço MailHog para capturar emails em desenvolvimento
+  mailhog:
+    container_name: mailhog
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Interface Web
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8025"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  db_data: ~
+  redis_data: ~
