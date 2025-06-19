@@ -46,21 +46,32 @@ class DashboardController extends Controller
         $data['gastos'] = $gastos;
 
 
-        $pdfContent = Browsershot::html(view('reports.gastos', compact(
-            'data'
-        ))->render())
-        ->setChromePath("/usr/bin/google-chrome-stable")
+        $chrome = '/usr/bin/chromium-browser';
+
+        $pdf = Browsershot::html(
+            view('reports.gastos', compact('data'))->render()
+        )
+        ->setChromePath('/usr/bin/chromium-browser')
         ->noSandbox()
-        ->setOption('args', ['--no-sandbox', '--disable-setuid-sandbox'])
-        ->setOption('executablePath', '/usr/bin/google-chrome-stable')
-        ->setOption('env', ['HOME' => '/home/appuser'])
-        ->format('a4')
-        ->timeout(60)
+
+        // ➜ flags extras
+        ->setOption('args', [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',   // evita /dev/shm pequeno
+            '--disable-gpu',             // headless = sem GPU
+            '--no-zygote'
+        ])
+
+        // (se quiser, aumente também o timeout do CDP)
+        ->setOption('protocolTimeout', 120_000)   // 120 s
+        ->timeout(120)            // tempo total do processo
         ->landscape()
+        ->format('a4')
         ->margins(10, 10, 10, 10)
-        ->pdf(); // This returns the PDF content directly
-        
-        return response($pdfContent)
+        ->pdf();
+
+        return response($pdf)
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', 'attachment; filename="relatorio_gastos_' . now()->format('Y-m-d H:i:s') . '.pdf"');
     }

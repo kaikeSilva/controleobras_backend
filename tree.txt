@@ -1,0 +1,41 @@
+.
+├── app
+│   ├── Events
+│   ├── Exceptions
+│   ├── Http
+│   ├── Jobs
+│   ├── Listeners
+│   ├── Mail
+│   ├── Models
+│   └── Providers
+├── bootstrap
+│   └── cache
+├── config
+├── database
+│   ├── factories
+│   ├── migrations
+│   └── seeders
+├── docker
+│   ├── nginx
+│   └── tests
+├── docs
+├── prompt
+├── public
+│   ├── build
+│   ├── relatorios
+│   └── swagger
+├── resources
+│   ├── css
+│   ├── js
+│   ├── sass
+│   └── views
+├── routes
+├── storage
+│   ├── app
+│   ├── framework
+│   └── logs
+├── tests
+│   ├── Feature
+│   └── Unit
+
+277 directories
