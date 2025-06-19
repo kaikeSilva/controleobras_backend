@@ -1,0 +1,88 @@
+# Use a mesma base do desenvolvimento
+FROM php:8.3-fpm
+
+# Instalar dependências (exatamente como no dev)
+# Instalar Node.js, npm e Google Chrome para geração de PDFs com Browsershot
+RUN apt-get update && apt-get install -y \
+    gnupg \
+    ca-certificates \
+    fonts-liberation \
+    libappindicator3-1 \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libnss3 \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    xdg-utils \
+    wget \
+    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
+    && apt install -y ./google-chrome-stable_current_amd64.deb \
+    && rm google-chrome-stable_current_amd64.deb \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Instalar extensões PHP (exatamente como no dev)
+RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
+
+# Instalar Redis (exatamente como no dev)
+RUN pecl install -o -f redis \
+    && rm -rf /tmp/pear \
+    && docker-php-ext-enable redis
+
+# Instalar Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Criar usuário não-root
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+RUN groupadd -g ${GROUP_ID} appuser && \
+    useradd -u ${USER_ID} -g appuser -m -s /bin/bash appuser
+
+# Configurar diretório de trabalho
+WORKDIR /var/www
+
+# Copiar código fonte
+COPY --chown=appuser:appuser . .
+
+# Instalar dependências PHP (incluir dev para seeders funcionarem)
+RUN if [ ! -d "vendor" ]; then \
+        composer install --optimize-autoloader --no-interaction --prefer-dist; \
+    fi
+
+# Criar diretórios necessários
+RUN mkdir -p \
+    /var/www/storage/logs \
+    /var/www/storage/framework/cache \
+    /var/www/storage/framework/sessions \
+    /var/www/storage/framework/views \
+    /var/www/bootstrap/cache \
+    && chown -R appuser:appuser /var/www/storage \
+    && chown -R appuser:appuser /var/www/bootstrap/cache \
+    && chmod -R 775 /var/www/storage \
+    && chmod -R 775 /var/www/bootstrap/cache
+
+# Copiar script de entrypoint
+COPY docker/entrypoint.prod.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Mudar para usuário não-root
+USER appuser
+
+# Expor porta do PHP-FPM
+EXPOSE 9000
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD php -v || exit 1
+
+# Entrypoint
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+# Comando padrão
+CMD ["php-fpm"]

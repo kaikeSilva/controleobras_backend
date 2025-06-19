@@ -40,6 +40,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    ports:
+      - "8080:8000"
 
   websocket:
     container_name: websocket
@@ -229,4 +231,4 @@ volumes:
 networks:
   default:
     name: traefik-public
-    external: true
+    external: false
