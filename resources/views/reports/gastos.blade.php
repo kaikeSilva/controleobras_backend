@@ -12,7 +12,7 @@
         }
 
         body {
-            font-family: DejaVu Sans, Arial, sans-serif;
+            font-family: -webkit-system-font, 'Segoe UI', Arial, sans-serif;
             font-size: 11px;
             line-height: 1.4;
             color: #2d3748;
@@ -30,6 +30,7 @@
             margin-bottom: 30px;
             border-bottom: 3px solid #2b6cb0;
             padding-bottom: 20px;
+            page-break-inside: avoid;
         }
 
         .header h1 {
@@ -56,6 +57,7 @@
             grid-template-columns: repeat(2, 1fr);
             gap: 15px;
             margin-bottom: 30px;
+            page-break-inside: avoid;
         }
 
         .card {
@@ -103,6 +105,8 @@
             border-radius: 8px;
             padding: 25px;
             margin-bottom: 30px;
+            page-break-inside: avoid;
+            min-height: 350px;
         }
 
         .chart-header {
@@ -128,19 +132,24 @@
             margin: 0 auto;
         }
 
-        /* Tables */
+        /* Tables - PRINCIPAIS CORREÇÕES AQUI */
         .table-section {
             background: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             margin-bottom: 25px;
-            overflow: hidden;
+            overflow: visible;
+            /* CRÍTICO: Remove quebra de página dentro da seção da tabela */
+            page-break-inside: avoid;
         }
 
         .table-header {
             background: #edf2f7;
             padding: 15px 20px;
             border-bottom: 1px solid #e2e8f0;
+            /* Evita quebra no cabeçalho da seção */
+            page-break-inside: avoid;
+            page-break-after: avoid;
         }
 
         .table-header h3 {
@@ -161,12 +170,37 @@
         }
 
         .table-wrapper {
-            overflow-x: auto;
+            overflow: visible;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
+            /* CRÍTICO: Configurações de quebra de página para tabela */
+            page-break-inside: auto;
+        }
+
+        /* CRÍTICO: Configurações específicas para thead */
+        thead {
+            display: table-header-group;
+            page-break-inside: avoid;
+            page-break-after: avoid;
+        }
+
+        thead tr {
+            page-break-inside: avoid;
+            page-break-after: avoid;
+        }
+
+        /* CRÍTICO: Configurações para tbody */
+        tbody {
+            display: table-row-group;
+        }
+
+        /* CRÍTICO: Evita quebra de linha individual no meio */
+        tr {
+            page-break-inside: avoid;
+            page-break-before: auto;
         }
 
         th, td {
@@ -182,6 +216,9 @@
             font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 0.3px;
+            /* CRÍTICO: Força o cabeçalho a não quebrar */
+            page-break-inside: avoid;
+            page-break-after: avoid;
         }
 
         td {
@@ -216,15 +253,35 @@
             font-weight: 500;
         }
 
-        /* Responsive adjustments for PDF */
+        /* CONFIGURAÇÕES ESPECÍFICAS PARA PDF */
+        @page { 
+            size: A4;
+            margin: 15mm 10mm 15mm 10mm;
+        }
+
+        /* Classes auxiliares para controle de quebra */
+        .no-break {
+            page-break-inside: avoid !important;
+        }
+
+        .break-before {
+            page-break-before: always;
+        }
+
+        .break-after {
+            page-break-after: always;
+        }
+
+        /* Configurações para impressão/PDF */
         @media print {
             .container {
-                padding: 15px;
+                padding: 10px;
             }
             
             .cards-grid {
                 grid-template-columns: repeat(4, 1fr);
                 gap: 10px;
+                page-break-inside: avoid;
             }
             
             .card {
@@ -234,29 +291,47 @@
             .chart-container {
                 height: 250px;
             }
+
+            /* CRÍTICO: Configurações específicas de impressão para tabelas */
+            .table-section {
+                page-break-inside: avoid;
+                margin-bottom: 20px;
+            }
+
+            table {
+                page-break-inside: auto;
+            }
+
+            thead {
+                display: table-header-group;
+            }
+
+            tr {
+                page-break-inside: avoid;
+            }
         }
 
         /* Footer */
         .footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 30px;
-            background: #ffffff;
-            border-top: 1px solid #e2e8f0;
+            margin-top: 30px;
             text-align: center;
             font-size: 10px;
             color: #a0aec0;
-            padding-top: 8px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+            page-break-inside: avoid;
         }
 
-        /* Page break control */
-        .page-break {
-            page-break-before: always;
+        /* Estilos para quando a tabela for muito grande */
+        .large-table .table-section {
+            page-break-inside: auto;
         }
 
-        .no-break {
+        .large-table table {
+            page-break-inside: auto;
+        }
+
+        .large-table tbody tr {
             page-break-inside: avoid;
         }
     </style>
@@ -264,7 +339,7 @@
 <body>
     <div class="container">
         <!-- Header -->
-        <div class="header">
+        <div class="header no-break">
             <h1>Relatório Financeiro</h1>
             <p>Análise detalhada do desempenho financeiro</p>
             <div class="date">Gerado em {{ now()->format('d/m/Y H:i:s') }}</div>
@@ -356,7 +431,8 @@
 
         <!-- Tabela de Gastos Detalhados -->
         @if(isset($data['gastos']) && $data['gastos']->count() > 0)
-        <div class="table-section">
+        <!-- Para tabelas muito grandes, usamos uma abordagem diferente -->
+        <div class="table-section {{ $data['gastos']->count() > 50 ? 'large-table' : 'no-break' }}">
             <div class="table-header">
                 <h3>Gastos Detalhados</h3>
                 <span class="count">{{ $data['gastos']->count() }} registros</span>
@@ -432,11 +508,11 @@
             </div>
         </div>
         @endif
-    </div>
 
-    <!-- Footer -->
-    <div class="footer">
-        Sistema de Controle de Obras • Relatório gerado automaticamente
+        <!-- Footer -->
+        <div class="footer">
+            Sistema de Controle de Obras • Relatório gerado automaticamente
+        </div>
     </div>
 
     <!-- Chart.js Script -->

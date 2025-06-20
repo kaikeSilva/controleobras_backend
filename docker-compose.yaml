@@ -1,234 +1,316 @@
-version: '3.8'
-
 services:
-  php:
-    container_name: php
-    image: docker-laravel-app
-    build:
-      context: .
-      target: php
-      args:
-        - APP_ENV=${APP_ENV}
-        - USER_ID=${USER_ID:-1000}
-        - GROUP_ID=${GROUP_ID:-1000}
-    environment:
-      - APP_ENV=${APP_ENV}
-      - CONTAINER_ROLE=app
-    working_dir: /var/www/
-    volumes:
-      - ./:/var/www
-    depends_on:
-      - db
-      - redis
-      - node
-      - websocket
+  # =============================================================================
+  # PDF SERVICE - Microserviço para geração de PDFs
+  # =============================================================================
+  pdf-service:
+    build: ./pdf-service
+    image: controleobras-pdf:latest
+    container_name: pdf-service-prod
     restart: unless-stopped
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.controleobrasbackend-http.rule=Host(`${DOMAIN}`)
-      - traefik.http.routers.controleobrasbackend-http.entrypoints=http
-      - traefik.http.routers.controleobrasbackend-http.middlewares=https-redirect
-      - traefik.http.routers.controleobrasbackend-https.rule=Host(`${DOMAIN}`)
-      - traefik.http.routers.controleobrasbackend-https.entrypoints=https
-      - traefik.http.routers.controleobrasbackend-https.tls=true
-      - traefik.http.routers.controleobrasbackend-https.tls.certresolver=le
-      - traefik.http.routers.controleobrasbackend-https.service=controleobrasbackend-service
-      - traefik.http.services.controleobrasbackend-service.loadbalancer.server.port=8000
+    networks: [app-network]
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     healthcheck:
-      test: ["CMD", "pgrep", "-f", "artisan serve"]
+      test: ["CMD", "curl", "-fs", "http://localhost:3000/health"]
       interval: 30s
-      timeout: 10s
       retries: 3
-      start_period: 60s
-    ports:
-      - "8080:8000"
 
-  websocket:
-    container_name: websocket
-    image: docker-laravel-websocket
-    build:
-      context: .
-      target: php
-      args:
-        - APP_ENV=${APP_ENV}
-        - USER_ID=${USER_ID:-1000}
-        - GROUP_ID=${GROUP_ID:-1000}
-    environment:
-      - APP_ENV=${APP_ENV}
-      - CONTAINER_ROLE=websocket
-    working_dir: /var/www/
-    volumes:
-      - ./:/var/www/
+  # =============================================================================
+  # NGINX - Reverse Proxy e Servidor Web
+  # =============================================================================
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-prod
+    restart: always
     ports:
-      - "6001:6001"
-    tty: true
-    depends_on:
-      - db
-      - redis
-      - node
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "6001"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
-  db:
-    container_name: db
-    image: mysql:5.7
-    ports:
-      - "3306:3306"
-    environment:
-      - MYSQL_DATABASE=${DB_DATABASE}
-      - MYSQL_USER=${DB_USERNAME}
-      - MYSQL_PASSWORD=${DB_PASSWORD}
-      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - "8080:80"
     volumes:
-      - db_data:/var/lib/mysql
-    restart: unless-stopped
-    command: --default-authentication-plugin=mysql_native_password
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-  redis:
-    container_name: redis
-    image: redis:alpine
-    ports:
-      - "6379:6379"
-    environment:
-      - REDIS_PASSWORD=${DB_PASSWORD}
-    volumes:
-      - redis_data:/data
-    restart: unless-stopped
-    command: ["redis-server", "--requirepass", "${DB_PASSWORD}"]
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${DB_PASSWORD}", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-  queue:
-    container_name: queue
-    image: docker-laravel-queue
-    build:
-      context: .
-      target: php
-      args:
-        - APP_ENV=${APP_ENV}
-        - USER_ID=${USER_ID:-1000}
-        - GROUP_ID=${GROUP_ID:-1000}
-    environment:
-      - APP_ENV=${APP_ENV}
-      - CONTAINER_ROLE=queue
-    working_dir: /var/www/
-    volumes:
-      - ./:/var/www/
-    depends_on:
-      - db
-      - redis
-    restart: unless-stopped
-    mem_limit: 512m
-    memswap_limit: 512m
-    healthcheck:
-      test: ["CMD", "pgrep", "-f", "queue:work"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 90s
-
-  node:
-    container_name: node
-    image: docker-laravel-node
-    build:
-      context: .
-      target: node
-      args:
-        - USER_ID=${USER_ID:-1000}
-        - GROUP_ID=${GROUP_ID:-1000}
-    working_dir: /var/www/
-    volumes:
-      - ./:/var/www
-    ports:
-      - "5173:5173"
-    command: npx vite --debug hmr --host # Correctly invoke Vite with npx
-    tty: true
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "node", "--version"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
-  
-  # Serviço MailHog para capturar emails em desenvolvimento
-  mailhog:
-    container_name: mailhog
-    image: mailhog/mailhog:latest
-    ports:
-      - "1025:1025"  # SMTP
-      - "8025:8025"  # Interface Web
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8025"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-      
-  # Container de testes automáticos que executa após todos os serviços estarem prontos
-  test-services:
-    container_name: test-services
-    image: docker-laravel-tests
-    build:
-      context: .
-      target: php
-      args:
-        - APP_ENV=${APP_ENV}
-        - USER_ID=${USER_ID:-1000}
-        - GROUP_ID=${GROUP_ID:-1000}
-    environment:
-      - APP_ENV=${APP_ENV}
-      - CONTAINER_ROLE=test
-      - TEST_DISABLED=${DOCKER_CONTAINER_TEST_DISABLED:-false}
-    working_dir: /var/www/
-    volumes:
-      - ./:/var/www/
-      - ./docker/tests:/tests
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/nginx/entrypoint.sh:/entrypoint.sh:ro
     depends_on:
       php:
         condition: service_healthy
+    networks:
+      - app-network
+    command: ["/entrypoint.sh", "nginx", "-g", "daemon off;"]
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # =============================================================================
+  # PHP-FPM - Aplicação Laravel
+  # =============================================================================
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+      target: php          #  ⬅️  aqui
+      args:
+        - USER_ID=${USER_ID:-1000}
+        - GROUP_ID=${GROUP_ID:-1000}
+    image: ${APP_NAME:-laravel}-app:latest
+    container_name: php-app-prod
+    restart: always
+    env_file:
+      - .env.production
+    environment:
+      - CONTAINER_ROLE=app
+    volumes:
+      - app_storage:/var/www/storage
+      - app_bootstrap:/var/www/bootstrap/cache
+    depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-      queue:
-        condition: service_healthy
-      websocket:
-        condition: service_healthy
-    restart: "no"
-    entrypoint: |
-      bash -c " 
-        if [ \"$$TEST_DISABLED\" = \"true\" ]; then
-          echo '⏭️  Testes desabilitados (TEST_DISABLED=true)'
-          echo '💡 Para habilitar: unset TEST_DISABLED ou TEST_DISABLED=false'
-          exit 0
-        fi
-        
-        echo '🧪 Iniciando testes automatizados...'
-        /tests/run-tests.sh
-      "
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "sh", "-c", "ps aux | grep '[p]hp-fpm' | head -1"]  # Verifica se processo está rodando
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
 
+  # =============================================================================
+  # WEBSOCKET - Laravel Reverb
+  # =============================================================================
+  websocket:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+      target: php
+      args:
+        - USER_ID=${USER_ID:-1000}
+        - GROUP_ID=${GROUP_ID:-1000}
+    image: ${APP_NAME:-laravel}-websocket:latest
+    container_name: websocket-prod
+    restart: always
+    env_file:
+      - .env.production
+    environment:
+      - CONTAINER_ROLE=websocket
+    ports:
+      - "6001:6001"
+    volumes:
+      - app_storage:/var/www/storage
+      - app_bootstrap:/var/www/bootstrap/cache
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      php:
+        condition: service_healthy
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "netcat", "-z", "localhost", "6001"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # =============================================================================
+  # QUEUE WORKER - Processamento de Filas
+  # =============================================================================
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+      target: php
+      args:
+        - USER_ID=${USER_ID:-1000}
+        - GROUP_ID=${GROUP_ID:-1000}
+    image: ${APP_NAME:-laravel}-queue:latest
+    container_name: queue-prod
+    restart: always
+    env_file:
+      - .env.production
+    environment:
+      - CONTAINER_ROLE=queue
+      - QUEUE_NAMES=pdf,default
+    volumes:
+      - app_storage:/var/www/storage
+      - app_bootstrap:/var/www/bootstrap/cache
+      - ./queue-logs:/var/www/storage/logs
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      php:
+        condition: service_healthy
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "queue:work"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  # =============================================================================
+  # SCHEDULER - Laravel Cron Jobs
+  # =============================================================================
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+      target: php
+      args:
+        - USER_ID=${USER_ID:-1000}
+        - GROUP_ID=${GROUP_ID:-1000}
+    image: ${APP_NAME:-laravel}-scheduler:latest
+    container_name: scheduler-prod
+    restart: always
+    env_file:
+      - .env.production
+    environment:
+      - CONTAINER_ROLE=scheduler
+    volumes:
+      - app_storage:/var/www/storage
+      - app_bootstrap:/var/www/bootstrap/cache
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      php:
+        condition: service_healthy
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+    security_opt:
+      - no-new-privileges:true
+
+  # =============================================================================
+  # MYSQL DATABASE
+  # =============================================================================
+  db:
+    image: mysql:8.0
+    container_name: mysql-prod
+    restart: always
+    environment:
+      - MYSQL_DATABASE=${DB_DATABASE}
+      - MYSQL_ROOT_PASSWORD=secret
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - app-network
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --bind-address=0.0.0.0
+      --innodb-buffer-pool-size=256M
+      --max-connections=100
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # =============================================================================
+  # REDIS - Cache e Sessões
+  # =============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: redis-prod
+    restart: always
+    environment:
+      - REDIS_PASSWORD=secret
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    command: ["redis-server", "--requirepass", "secret", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "secret", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+# =============================================================================
+# VOLUMES - Dados Persistentes
+# =============================================================================
 volumes:
-  db_data: ~
-  redis_data: ~
+  db_data:
+  redis_data:
+  app_storage:
+  app_bootstrap:
 
+# =============================================================================
+# NETWORKS
+# =============================================================================
 networks:
-  default:
-    name: traefik-public
-    external: false
+  app-network:
+    driver: bridge
+
+# comandos
+# docker compose --env-file .env.production   -f docker-compose.prod.yaml build --no-cache
+# docker compose --env-file .env.production   -f docker-compose.prod.yaml up -d
+# docker compose --env-file .env.production   -f docker-compose.prod.yaml down
+

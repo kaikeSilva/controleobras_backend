@@ -1,395 +1,453 @@
-Eu dockerizei um frontend em vue js e criei uma imagem para ele, segue o dockerfile e o docker compose assim como o env
+# 🚀 Plano de Ação: Modernização da Dockerização
 
+## **📊 Diagnóstico dos Arquivos Atuais**
 
-# build stage
-FROM node:lts-alpine as build-stage
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-# Garantir que as variáveis de ambiente estejam disponíveis durante o build
-ARG VITE_API_BASE_URL
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-RUN npm run build
+### **✅ Arquivos Base Identificados:**
+- `Dockerfile.production` → será base para novo `Dockerfile`
+- `docker/entrypoint.prod.sh` → será base para novo `docker/entrypoint.sh`
+- `docker-compose.prod.yaml` → será base para nova estrutura modular
+- `.env` → será reorganizado em múltiplos arquivos de ambiente
 
-# production stage
-FROM nginx:stable-alpine as production-stage
-COPY --from=build-stage /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+---
 
+## **📁 Nova Estrutura de Pastas**
 
+```
+controleobras/
+├── docker/
+│   ├── entrypoint.sh                 # ← Baseado em entrypoint.prod.sh
+│   ├── nginx/
+│   │   ├── default.conf              # ← Manter como está
+│   │   └── entrypoint.sh             # ← Manter como está
+│   ├── compose/
+│   │   ├── docker-compose.base.yml   # ← Extraído de docker-compose.prod.yaml
+│   │   ├── docker-compose.dev.yml    # ← Novo (overrides para dev)
+│   │   └── docker-compose.prod.yml   # ← Extraído de docker-compose.prod.yaml
+│   └── env/
+│       ├── .env.development          # ← Baseado no .env atual
+│       └── .env.production           # ← Baseado no .env atual
+├── pdf-service/
+│   └── Dockerfile                    # ← Manter inalterado (já está correto)
+├── Dockerfile                        # ← Baseado em Dockerfile.production
+└── .env                             # ← Manter como está (para compatibilidade)
+```
 
+---
+
+## **🔧 Transformações Arquivo por Arquivo**
+
+### **1. Dockerfile (Raiz)**
+
+**📋 Base:** Copie `Dockerfile.production` para `Dockerfile`
+
+**🔄 Mudanças Necessárias:**
+
+```dockerfile
+# COPIAR TODO O CONTEÚDO de Dockerfile.production
+
+# ❌ REMOVER esta linha:
+# COPY docker/entrypoint.prod.sh /usr/local/bin/entrypoint.sh
+
+# ✅ SUBSTITUIR por:
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# ✅ ADICIONAR após a linha ENV PUPPETEER_EXECUTABLE_PATH=...
+# Configuração flexível de ambiente
+ARG APP_ENV=production
+ENV APP_ENV=${APP_ENV} \
+    INSTALL_DEV_DEPS=false \
+    LOG_LEVEL=info
+
+# ✅ MANTER todo o resto inalterado
+```
+
+**💡 Resultado:** Dockerfile único que detecta ambiente via `APP_ENV` mas mantém toda funcionalidade existente.
+
+---
+
+### **2. docker/entrypoint.sh**
+
+**📋 Base:** Copie `docker/entrypoint.prod.sh` para `docker/entrypoint.sh`
+
+**🔄 Mudanças Necessárias:**
+
+```bash
+#!/bin/bash
+set -e
+
+# ✅ MANTER todo o debug inicial
+echo "=== ENTRYPOINT DEBUG ==="
+echo "CONTAINER_ROLE: $CONTAINER_ROLE"
+echo "USER: $(whoami)"
+echo "PWD: $(pwd)"
+echo "PHP VERSION: $(php --version | head -n1)"
+echo "========================"
+
+# ✅ ADICIONAR NOVA SEÇÃO antes do "Aguardar dependências"
+# Configuração por ambiente
+APP_ENV="${APP_ENV:-production}"
+echo "🚀 Ambiente detectado: $APP_ENV"
+
+configure_environment() {
+    case "$APP_ENV" in
+        "local"|"development")
+            echo "🔧 Configurando modo desenvolvimento..."
+            # Instalar dependências de dev se solicitado
+            if [ "$INSTALL_DEV_DEPS" = "true" ]; then
+                echo "📦 Instalando dependências de desenvolvimento..."
+                composer install --dev --no-interaction || true
+            fi
+            # Configurações mais permissivas para dev
+            export DB_CONNECTION_TIMEOUT=30
+            export QUEUE_RETRY_AFTER=30
+            ;;
+        "production")
+            echo "🚀 Configurando modo produção..."
+            # Configurações otimizadas para produção
+            export DB_CONNECTION_TIMEOUT=10
+            export QUEUE_RETRY_AFTER=300
+            ;;
+    esac
+}
+
+# ✅ EXECUTAR configuração
+configure_environment
+
+# ✅ MANTER TODA a seção "Aguardar dependências" igual
+if [ "$CONTAINER_ROLE" = "app" ] || [ "$CONTAINER_ROLE" = "websocket" ] || [ "$CONTAINER_ROLE" = "queue" ] || [ "$CONTAINER_ROLE" = "scheduler" ]; then
+    # ... (copiar exatamente como está)
+fi
+
+# ✅ MODIFICAR apenas a seção "app" no case:
+case "$CONTAINER_ROLE" in
+    "app")
+        # ✅ MANTER: criação do banco
+        echo "Criando banco, se necessário..."
+        mariadb --ssl=OFF \
+                -h "$DB_HOST" -u"$DB_USERNAME" -p"$DB_PASSWORD" \
+                -e "CREATE DATABASE IF NOT EXISTS \`$DB_DATABASE\` \
+                    CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+        # ✅ SUBSTITUIR a seção de cache por esta lógica condicional:
+        echo "Configurando caches Laravel..."
+        php artisan route:clear   || true
+        php artisan config:clear  || true
+        php artisan view:clear    || true
+        
+        if [ "$APP_ENV" = "production" ]; then
+            echo "🚀 Aplicando caches de produção..."
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+        else
+            echo "🔧 Modo desenvolvimento - sem cache agressivo"
+            # Executar discovery para dev
+            php artisan package:discover --ansi || true
+        fi
+
+        # ✅ ADICIONAR antes das migrações:
+        if [ "$APP_ENV" = "local" ] || [ "$APP_ENV" = "development" ]; then
+            # Storage link para desenvolvimento
+            php artisan storage:link || true
+            
+            # Seeders apenas em desenvolvimento
+            if [ "$RUN_SEEDERS" = "true" ]; then
+                echo "🌱 Executando seeders..."
+                php artisan db:seed --force || true
+            fi
+        fi
+
+        # ✅ MANTER: migrações e inicio do PHP-FPM exatamente igual
+        echo "Rodando migrações..."
+        php artisan migrate --force
+
+        echo "Iniciando PHP-FPM..."
+        exec php-fpm -F
+        ;;
+
+    # ✅ MANTER todos os outros cases (websocket, queue, scheduler, *) EXATAMENTE iguais
+    "websocket")
+        # ... (copiar exatamente)
+    "queue")
+        # ... (copiar exatamente)
+    "scheduler")
+        # ... (copiar exatamente)
+    *)
+        # ... (copiar exatamente)
+esac
+```
+
+---
+
+### **3. docker/compose/docker-compose.base.yml**
+
+**📋 Base:** Extrair de `docker-compose.prod.yaml`
+
+**🔄 Processo:**
+
+```yaml
+# ✅ COPIAR a estrutura básica de docker-compose.prod.yaml
+
+version: '3.8'
 
 services:
-  app:
-    build: 
-      context: .
-      dockerfile: Dockerfile.production
-      args:
-        - VITE_API_BASE_URL=${VITE_API_BASE_URL}
-    image: kaikesilva/controleobrasfrontend:latest
-    env_file:
-      - .env
-    ports:
-      - "127.0.0.1:3000:80"
-    restart: unless-stopped
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.controleobrasfrontend-http.rule=Host(`gestao.controleobras.online`)
-      - traefik.http.routers.controleobrasfrontend-http.entrypoints=http
-      - traefik.http.routers.controleobrasfrontend-http.middlewares=https-redirect
-      - traefik.http.routers.controleobrasfrontend-https.rule=Host(`gestao.controleobras.online`)
-      - traefik.http.routers.controleobrasfrontend-https.entrypoints=https
-      - traefik.http.routers.controleobrasfrontend-https.tls=true
-      - traefik.http.routers.controleobrasfrontend-https.tls.certresolver=le
-      - traefik.http.routers.controleobrasfrontend-https.service=controleobrasfrontend-service
-      - traefik.http.services.controleobrasfrontend-service.loadbalancer.server.port=3000
-
-networks:
-  default:
-    name: traefik-public
-    external: true
-
-VITE_REVERB_APP_KEY=rpfnh21jtr3szlu5frah
-VITE_REVERB_HOST=localhost
-VITE_REVERB_PORT=6001
-VITE_REVERB_SCHEME=ws
-# VITE_REVERB_CLUSTER=mt1 # If you use a specific cluster
-# VITE_API_BASE_URL=https://web.controleobras.online/api
-VITE_API_BASE_URL=http://127.0.0.1:8080/api
-
-
-como era apenas um unico service, eu criei a imagem e agora ao fazer push ele faz um push da nova imagem no docker hub e faz um pull dela na vps utilizando o seguinte git actions
-# build-docker image and push to dockerhub
-name: build_production_image
-
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-        # Dockerfile.production and docker-compose.production.yml should be used
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          push: true
-          tags: kaikesilva/controleobrasfrontend:latest
-          context: .
-          file: ./Dockerfile.production
-
-  deploy:
-    needs: build  # Só roda depois que a imagem for publicada
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to VPS via SSH
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            docker pull kaikesilva/controleobrasfrontend:latest
-            docker compose -f /home/deployuser/projects/controle_obras/controle_obras_frontend/docker-compose.production.yml up -d
-
-gostaria de fazer o mesmo para o backend, porem o backend possui varios servicos como seria este fluxo para varios servicos?
-segue o docker compose do backend
-
-
-services:
-  # =============================================================================
-  # NGINX - Reverse Proxy e Servidor Web
-  # =============================================================================
-  nginx:
-    image: nginx:alpine
-    container_name: nginx-prod
-    restart: always
-    ports:
-      - "8080:80"
-    volumes:
-      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - app_public:/var/www/public:ro
-      - ./public/swagger:/var/www/public/swagger:ro
-    depends_on:
-      - php
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-
-  # =============================================================================
-  # PHP-FPM - Aplicação Laravel
-  # =============================================================================
+  # ✅ MODIFICAR apenas estas linhas no serviço php:
   php:
     build:
       context: .
-      dockerfile: Dockerfile.production
+      dockerfile: Dockerfile  # ← REMOVER .production
+      target: php
       args:
         - USER_ID=${USER_ID:-1000}
         - GROUP_ID=${GROUP_ID:-1000}
-    image: ${APP_NAME:-laravel}-app:latest
-    container_name: php-app-prod
+        - APP_ENV=${APP_ENV:-production}  # ← ADICIONAR
+    image: ${APP_NAME:-controleobras}-app:latest
+    container_name: ${APP_NAME:-controleobras}-php
     restart: always
     env_file:
-      - .env.production
+      - .env  # ← MANTER compatibilidade
     environment:
       - CONTAINER_ROLE=app
-    volumes:
-      - app_public:/var/www/public
-      - app_storage:/var/www/storage
-      - app_bootstrap:/var/www/bootstrap/cache
-    depends_on:
-      - db
-      - redis
-    networks:
-      - app-network
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
-    security_opt:
-      - no-new-privileges:true
-    healthcheck:
-      test: ["CMD", "php", "-v"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+      - APP_ENV=${APP_ENV:-production}  # ← ADICIONAR
+    # ✅ MANTER todo o resto (volumes, depends_on, networks, etc.) IGUAL
 
-  # =============================================================================
-  # WEBSOCKET - Laravel Reverb
-  # =============================================================================
+  # ✅ APLICAR o mesmo padrão para websocket, queue, scheduler:
   websocket:
     build:
       context: .
-      dockerfile: Dockerfile.production
+      dockerfile: Dockerfile  # ← REMOVER .production
+      target: php
       args:
         - USER_ID=${USER_ID:-1000}
         - GROUP_ID=${GROUP_ID:-1000}
-    image: ${APP_NAME:-laravel}-websocket:latest
-    container_name: websocket-prod
-    restart: always
-    env_file:
-      - .env.production
+        - APP_ENV=${APP_ENV:-production}  # ← ADICIONAR
+    # ✅ MANTER todo o resto igual, apenas adicionar:
     environment:
       - CONTAINER_ROLE=websocket
-    ports:
-      - "6001:6001"
-    volumes:
-      - app_storage:/var/www/storage
-      - app_bootstrap:/var/www/bootstrap/cache
-    depends_on:
-      - db
-      - redis
-    networks:
-      - app-network
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.25'
-        reservations:
-          memory: 128M
-          cpus: '0.1'
-    security_opt:
-      - no-new-privileges:true
-    healthcheck:
-      test: ["CMD", "netcat", "-z", "localhost", "6001"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+      - APP_ENV=${APP_ENV:-production}  # ← ADICIONAR
 
-  # =============================================================================
-  # QUEUE WORKER - Processamento de Filas
-  # =============================================================================
-  queue:
-    build:
-      context: .
-      dockerfile: Dockerfile.production
-      args:
-        - USER_ID=${USER_ID:-1000}
-        - GROUP_ID=${GROUP_ID:-1000}
-    image: ${APP_NAME:-laravel}-queue:latest
-    container_name: queue-prod
-    restart: always
-    env_file:
-      - .env.production
-    environment:
-      - CONTAINER_ROLE=queue
-    volumes:
-      - app_storage:/var/www/storage
-      - app_bootstrap:/var/www/bootstrap/cache
-    depends_on:
-      - db
-      - redis
-      - php
-    networks:
-      - app-network
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
-    security_opt:
-      - no-new-privileges:true
-    healthcheck:
-      test: ["CMD", "pgrep", "-f", "queue:work"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 90s
-
-  # =============================================================================
-  # MYSQL DATABASE
-  # =============================================================================
+  # ✅ MANTER TODOS os outros serviços (db, redis, nginx, pdf-service) EXATAMENTE iguais
   db:
-    image: mysql:8.0
-    container_name: mysql-prod
-    restart: always
-    environment:
-      - MYSQL_DATABASE=${DB_DATABASE}
-      - MYSQL_ROOT_PASSWORD=secret
-    volumes:
-      - db_data:/var/lib/mysql
-    networks:
-      - app-network
-    command: >
-      --default-authentication-plugin=mysql_native_password
-      --bind-address=0.0.0.0
-      --innodb-buffer-pool-size=256M
-      --max-connections=100
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
-    security_opt:
-      - no-new-privileges:true
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-  # =============================================================================
-  # REDIS - Cache e Sessões
-  # =============================================================================
+    # ... (copiar exatamente de docker-compose.prod.yaml)
+  
   redis:
-    image: redis:7-alpine
-    container_name: redis-prod
-    restart: always
-    environment:
-      - REDIS_PASSWORD=secret
-    volumes:
-      - redis_data:/data
-    networks:
-      - app-network
-    command: ["redis-server", "--requirepass", "secret", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.25'
-        reservations:
-          memory: 128M
-          cpus: '0.1'
-    security_opt:
-      - no-new-privileges:true
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "secret", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+    # ... (copiar exatamente de docker-compose.prod.yaml)
+    
+  nginx:
+    # ... (copiar exatamente de docker-compose.prod.yaml)
+    
+  pdf-service:
+    # ... (copiar exatamente de docker-compose.prod.yaml)
 
-  # =============================================================================
-  # SCHEDULER - Laravel Cron Jobs
-  # =============================================================================
-  scheduler:
-    build:
-      context: .
-      dockerfile: Dockerfile.production
-      args:
-        - USER_ID=${USER_ID:-1000}
-        - GROUP_ID=${GROUP_ID:-1000}
-    image: ${APP_NAME:-laravel}-scheduler:latest
-    container_name: scheduler-prod
-    restart: always
-    env_file:
-      - .env.production
-    environment:
-      - CONTAINER_ROLE=scheduler
-    volumes:
-      - app_storage:/var/www/storage
-      - app_bootstrap:/var/www/bootstrap/cache
-    depends_on:
-      - db
-      - redis
-      - php
-    networks:
-      - app-network
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.25'
-        reservations:
-          memory: 128M
-          cpus: '0.1'
-    security_opt:
-      - no-new-privileges:true
-
-# =============================================================================
-# VOLUMES - Dados Persistentes
-# =============================================================================
+# ✅ MANTER volumes e networks EXATAMENTE iguais
 volumes:
-  db_data:
-    driver: local
-  redis_data:
-    driver: local
-  app_storage:
-    driver: local
-  app_bootstrap:
-    driver: local
-  app_public:
-    driver: local
+  # ... (copiar de docker-compose.prod.yaml)
 
-# =============================================================================
-# NETWORKS
-# =============================================================================
 networks:
-  app-network:
-    driver: bridge
+  # ... (copiar de docker-compose.prod.yaml)
+```
+
+---
+
+### **4. docker/compose/docker-compose.dev.yml**
+
+**📋 Base:** Novo arquivo (override para desenvolvimento)
+
+**🔄 Criação:**
+
+```yaml
+version: '3.8'
+
+# ✅ CRIAR do zero - overrides para desenvolvimento
+services:
+  php:
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - INSTALL_DEV_DEPS=true
+      - RUN_SEEDERS=true
+    volumes:
+      - .:/var/www  # ← Hot reload para desenvolvimento
+    ports:
+      - "9000:9000"  # ← Expor PHP-FPM para debug
+
+  websocket:
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+
+  queue:
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - QUEUE_NAMES=default  # ← Filas mais simples em dev
+
+  scheduler:
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+
+  # ✅ NGINX com configuração para desenvolvimento
+  nginx:
+    ports:
+      - "8080:80"  # ← Porta padrão para dev
+
+  # ✅ REMOVER deploy constraints para desenvolvimento
+  # (não adicionar seções deploy nos overrides)
+```
+
+---
+
+### **5. docker/compose/docker-compose.prod.yml**
+
+**📋 Base:** Extrair configurações de produção de `docker-compose.prod.yaml`
+
+**🔄 Processo:**
+
+```yaml
+version: '3.8'
+
+# ✅ EXTRAIR apenas as configurações específicas de produção
+services:
+  php:
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    # ✅ COPIAR as seções deploy, security_opt, healthcheck de docker-compose.prod.yaml
+    deploy:
+      # ... (copiar exatamente)
+    security_opt:
+      # ... (copiar exatamente)
+    healthcheck:
+      # ... (copiar exatamente)
+
+  websocket:
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    deploy:
+      # ... (copiar de docker-compose.prod.yaml)
+    security_opt:
+      # ... (copiar de docker-compose.prod.yaml)
+    healthcheck:
+      # ... (copiar de docker-compose.prod.yaml)
+
+  # ✅ REPETIR padrão para queue e scheduler
+  # ✅ MANTER todas as configurações de produção (deploy, security, health)
+```
+
+---
+
+### **6. docker/env/.env.development**
+
+**📋 Base:** Copiar `.env` atual
+
+**🔄 Mudanças:**
+
+```bash
+# ✅ COPIAR TODO o conteúdo do .env atual
+
+# ✅ MODIFICAR apenas estas linhas:
+APP_ENV=local  # ← em vez de production
+APP_DEBUG=true  # ← em vez de false
+
+# ✅ ADICIONAR estas novas variáveis:
+INSTALL_DEV_DEPS=true
+RUN_SEEDERS=true
+LOG_LEVEL=debug
+
+# ✅ MANTER todas as outras configurações iguais
+```
+
+---
+
+### **7. docker/env/.env.production**
+
+**📋 Base:** Copiar `.env` atual
+
+**🔄 Mudanças:**
+
+```bash
+# ✅ COPIAR TODO o conteúdo do .env atual
+
+# ✅ MANTER APP_ENV=production (já está correto)
+
+# ✅ ADICIONAR estas novas variáveis:
+INSTALL_DEV_DEPS=false
+RUN_SEEDERS=false
+
+# ✅ MANTER todas as outras configurações iguais
+```
+
+---
+
+---
+
+## **📋 Checklist de Migração**
+
+### **Fase 1: Preparação**
+- [ ] Criar pasta `docker/compose/`
+- [ ] Criar pasta `docker/env/`
+- [ ] Copiar `Dockerfile.production` → `Dockerfile` com modificações
+- [ ] Copiar `entrypoint.prod.sh` → `docker/entrypoint.sh` com modificações
+- [ ] Criar `docker-compose.base.yml` baseado no atual
+- [ ] Criar `docker-compose.dev.yml` e `docker-compose.prod.yml`
+- [ ] Criar arquivos de environment
+
+### **Fase 2: Teste**
+- [ ] Testar build: `docker build -t test .`
+- [ ] Testar desenvolvimento: 
+  ```bash
+  docker-compose -f docker/compose/docker-compose.base.yml \
+                 -f docker/compose/docker-compose.dev.yml \
+                 --env-file docker/env/.env.development up -d
+  ```
+- [ ] Validar todas as funcionalidades
+- [ ] Testar produção:
+  ```bash
+  docker-compose -f docker/compose/docker-compose.base.yml \
+                 -f docker/compose/docker-compose.prod.yml \
+                 --env-file docker/env/.env.production up -d
+  ```
+
+### **Fase 3: Cleanup**
+- [ ] Remover `Dockerfile.production`
+- [ ] Remover `docker/entrypoint.prod.sh`
+- [ ] Remover `docker-compose.prod.yaml`
+- [ ] Atualizar documentação
+
+## **🎯 Comandos de Uso Final**
+
+### **Para Desenvolvimento:**
+```bash
+docker-compose -f docker/compose/docker-compose.base.yml \
+               -f docker/compose/docker-compose.dev.yml \
+               --env-file docker/env/.env.development \
+               up -d --build
+```
+
+### **Para Produção:**
+```bash
+docker-compose -f docker/compose/docker-compose.base.yml \
+               -f docker/compose/docker-compose.prod.yml \
+               --env-file docker/env/.env.production \
+               up -d --build
+```
+
+**🎯 Resultado:** Estrutura moderna mantendo 100% da funcionalidade atual!
+
+### **💡 Como usar após a migração:**
+
+**Desenvolvimento:**
+```bash
+docker-compose -f docker/compose/docker-compose.base.yml \
+               -f docker/compose/docker-compose.dev.yml \
+               --env-file docker/env/.env.development up -d
+```
+
+**Produção:**
+```bash
+docker-compose -f docker/compose/docker-compose.base.yml \
+               -f docker/compose/docker-compose.prod.yml \
+               --env-file docker/env/.env.production up -d
+```

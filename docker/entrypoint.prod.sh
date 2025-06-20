@@ -54,7 +54,12 @@ case "$CONTAINER_ROLE" in
         ;;
     "queue")
         echo "Iniciando Queue Worker..."
-        exec php artisan queue:work --verbose --tries=3 --timeout=90
+        # usa valor da env, cai para 'default' se não existir
+        QUEUE_NAMES="${QUEUE_NAMES:-default}"
+
+        exec php artisan queue:work redis \
+            --queue="$QUEUE_NAMES" \
+            --verbose --tries=3 --timeout=300
         ;;
     "scheduler")
         echo "Iniciando Laravel schedule:work…"

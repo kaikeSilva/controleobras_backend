@@ -1,41 +1,17 @@
-.
-├── app
-│   ├── Events
-│   ├── Exceptions
-│   ├── Http
-│   ├── Jobs
-│   ├── Listeners
-│   ├── Mail
-│   ├── Models
-│   └── Providers
-├── bootstrap
-│   └── cache
-├── config
-├── database
-│   ├── factories
-│   ├── migrations
-│   └── seeders
-├── docker
-│   ├── nginx
-│   └── tests
-├── docs
-├── prompt
-├── public
-│   ├── build
-│   ├── relatorios
-│   └── swagger
-├── resources
-│   ├── css
-│   ├── js
-│   ├── sass
-│   └── views
-├── routes
-├── storage
-│   ├── app
-│   ├── framework
-│   └── logs
-├── tests
-│   ├── Feature
-│   └── Unit
-
-277 directories
+controleobras/
+├── docker/
+│   ├── entrypoint.sh                 # ← Baseado em entrypoint.prod.sh
+│   ├── nginx/
+│   │   ├── default.conf              # ← Manter como está
+│   │   └── entrypoint.sh             # ← Manter como está
+│   ├── compose/
+│   │   ├── docker-compose.base.yml   # ← Extraído de docker-compose.prod.yaml
+│   │   ├── docker-compose.dev.yml    # ← Novo (overrides para dev)
+│   │   └── docker-compose.prod.yml   # ← Extraído de docker-compose.prod.yaml
+│   └── env/
+│       ├── .env.development          # ← Baseado no .env atual
+│       └── .env.production           # ← Baseado no .env atual
+├── pdf-service/
+│   └── Dockerfile                    # ← Manter inalterado (já está correto)
+├── Dockerfile                        # ← Baseado em Dockerfile.production
+└── .env                             # ← Manter como está (para compatibilidade)

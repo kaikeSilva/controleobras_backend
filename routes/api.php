@@ -44,4 +44,6 @@ Route::prefix('dashboard')->middleware('auth:sanctum')->group(function () {
 });
 
 // Relatórios PDF
-Route::get('relatorios/gastos', [DashboardController::class, 'relatorio'])->name('relatorio');
+Route::get('relatorios/gastos', [DashboardController::class, 'relatorio'])->name('relatorio')->middleware('auth:sanctum');
+Route::get('relatorios/status/{filename}', [DashboardController::class, 'verificarRelatorio'])->name('dashboard.verificar.relatorio')->middleware('auth:sanctum');
+Route::get('relatorios/download/{filename}', [DashboardController::class, 'downloadRelatorio'])->name('dashboard.download.relatorio');

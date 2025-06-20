@@ -1,5 +1,23 @@
 services:
   # =============================================================================
+  # PDF SERVICE - Microserviço para geração de PDFs
+  # =============================================================================
+  pdf-service:
+    build: ./pdf-service
+    image: controleobras-pdf:latest
+    container_name: pdf-service-prod
+    restart: unless-stopped
+    networks: [app-network]
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:3000/health"]
+      interval: 30s
+      retries: 3
+
+  # =============================================================================
   # NGINX - Reverse Proxy e Servidor Web
   # =============================================================================
   nginx:
@@ -136,9 +154,11 @@ services:
       - .env.production
     environment:
       - CONTAINER_ROLE=queue
+      - QUEUE_NAMES=pdf,default
     volumes:
       - app_storage:/var/www/storage
       - app_bootstrap:/var/www/bootstrap/cache
+      - ./queue-logs:/var/www/storage/logs
     depends_on:
       db:
         condition: service_healthy
@@ -290,7 +310,10 @@ networks:
     driver: bridge
 
 # comandos
-# docker compose --env-file .env.production   -f docker-compose.prod.yaml build --no-cache
-# docker compose --env-file .env.production   -f docker-compose.prod.yaml up -d
-# docker compose --env-file .env.production   -f docker-compose.prod.yaml down
+# docker compose -f docker-compose.prod.yaml build --no-cache
+# docker compose -f docker-compose.prod.yaml up -d
+# docker compose -f docker-compose.prod.yaml down
 
+# comando especifico para subir container especifico do php
+# docker compose -f docker-compose.prod.yaml build --no-cache php
+# docker compose -f docker-compose.prod.yaml up -d php queue scheduler websocket

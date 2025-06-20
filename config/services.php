@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'pdf' => [
+        'url' => env('PDF_SERVICE_URL'),
+    ],
+
 ];

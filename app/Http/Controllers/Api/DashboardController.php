@@ -13,6 +13,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Spatie\Browsershot\Browsershot;
 use Spatie\LaravelPdf\Facades\Pdf;
+use App\Jobs\GeneratePdfJob;
+use Illuminate\Support\Facades\Storage;
 
 class DashboardController extends Controller
 {
@@ -45,35 +47,32 @@ class DashboardController extends Controller
 
         $data['gastos'] = $gastos;
 
-
-        $chrome = '/usr/bin/chromium-browser';
-
-        $pdf = Browsershot::html(
-            view('reports.gastos', compact('data'))->render()
-        )
-        ->setChromePath('/usr/bin/chromium-browser')
-        ->noSandbox()
-
-        // ➜ flags extras
-        ->setOption('args', [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',   // evita /dev/shm pequeno
-            '--disable-gpu',             // headless = sem GPU
-            '--no-zygote'
-        ])
-
-        // (se quiser, aumente também o timeout do CDP)
-        ->setOption('protocolTimeout', 120_000)   // 120 s
-        ->timeout(120)            // tempo total do processo
-        ->landscape()
-        ->format('a4')
-        ->margins(10, 10, 10, 10)
-        ->pdf();
-
-        return response($pdf)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'attachment; filename="relatorio_gastos_' . now()->format('Y-m-d H:i:s') . '.pdf"');
+        // Gerar nome do arquivo
+        $filename = 'relatorio_gastos_' . now()->format('Ymd_His') . '.pdf';
+        
+        // Dispatch do job para a fila
+        dispatch(new GeneratePdfJob(
+            view: 'reports.gastos',
+            data: ['data' => $data],
+            filename: $filename,
+            options: [
+                'landscape' => true,
+                'format' => 'a4',
+                'margin' => [
+                    'top' => '10mm',
+                    'right' => '10mm',
+                    'bottom' => '10mm',
+                    'left' => '10mm'
+                ]
+            ],
+        ))->onQueue('pdf');
+        
+        // Retornar resposta imediata
+        return response()->json([
+            'message' => 'Relatório está sendo gerado',
+            'filename' => $filename,
+            'status' => 'processing'
+        ]);
     }
 
     /**
@@ -395,6 +394,47 @@ class DashboardController extends Controller
         $evolucao = $this->getEvolucaoMensal($filters);
 
         return response()->json($evolucao);
+    }
+    
+    /**
+     * Verifica o status de um relatório PDF gerado
+     */
+    public function verificarRelatorio(string $filename)
+    {
+        $disk = config('filesystems.pdf_disk', 'pdfs');
+        
+        if (Storage::disk($disk)->exists($filename)) {
+            return response()->json([
+                'status' => 'completed',
+                'filename' => $filename,
+                'download_url' => route('dashboard.download.relatorio', $filename)
+            ]);
+        }
+        
+        return response()->json([
+            'status' => 'processing',
+            'filename' => $filename
+        ]);
+    }
+    
+    /**
+     * Faz download de um relatório PDF gerado
+     */
+    public function downloadRelatorio(string $filename)
+    {
+        $disk = config('filesystems.pdf_disk', 'pdfs');
+        
+        if (!Storage::disk($disk)->exists($filename)) {
+            return response()->json([
+                'error' => 'Arquivo não encontrado'
+            ], 404);
+        }
+        
+        return Storage::disk($disk)->download(
+            $filename, 
+            'relatorio_gastos.pdf', 
+            ['Content-Type' => 'application/pdf']
+        );
     }
 
     /**
