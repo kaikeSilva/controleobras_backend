@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Spatie\Browsershot\Browsershot;
 use Spatie\LaravelPdf\Facades\Pdf;
 use App\Jobs\GeneratePdfJob;
+use App\Services\PdfNotificationService;
 use Illuminate\Support\Facades\Storage;
 
 class DashboardController extends Controller
@@ -37,7 +38,7 @@ class DashboardController extends Controller
         ];
 
         // Buscar gastos detalhados para a tabela
-        $gastos = Gasto::with(['categoriaGasto', 'obra', 'fontePagadora']) // Adicionei fontePagadora
+        $gastos = Gasto::with(['categoriaGasto', 'obra', 'fontePagadora'])
             ->when(!empty($filters['obras']), fn($q) => $q->whereIn('obra_id', $filters['obras']))
             ->when(!empty($filters['categorias_gasto']), fn($q) => $q->whereIn('categoria_gasto_id', $filters['categorias_gasto']))
             ->whereBetween('data_pagamento', [$dataInicio, $dataFim])
@@ -47,14 +48,19 @@ class DashboardController extends Controller
 
         $data['gastos'] = $gastos;
 
-        // Gerar nome do arquivo
+        // Gerar IDs únicos
+        $notificationService = app(PdfNotificationService::class);
+        $jobId = $notificationService->generateJobId();
         $filename = 'relatorio_gastos_' . now()->format('Ymd_His') . '.pdf';
+        $userId = auth()->id();
         
-        // Dispatch do job para a fila
+        // Dispatch do job para a fila COM notificações
         dispatch(new GeneratePdfJob(
             view: 'reports.gastos',
             data: ['data' => $data],
             filename: $filename,
+            jobId: $jobId,
+            userId: $userId,
             options: [
                 'landscape' => true,
                 'format' => 'a4',
@@ -67,11 +73,13 @@ class DashboardController extends Controller
             ],
         ))->onQueue('pdf');
         
-        // Retornar resposta imediata
+        // Retornar resposta com job_id
         return response()->json([
             'message' => 'Relatório está sendo gerado',
+            'job_id' => $jobId,
             'filename' => $filename,
-            'status' => 'processing'
+            'status' => 'processing',
+            'websocket_channel' => "private-pdf.{$userId}"
         ]);
     }
 
@@ -396,6 +404,56 @@ class DashboardController extends Controller
         return response()->json($evolucao);
     }
     
+    /**
+     * Cancelar geração de relatório
+     */
+    public function cancelarRelatorio(Request $request)
+    {
+        $jobId = $request->get('job_id');
+        $userId = auth()->id();
+        
+        // Aqui você implementaria a lógica para cancelar o job
+        // Por exemplo, usando Redis para sinalizar cancelamento
+        
+        return response()->json([
+            'message' => 'Solicitação de cancelamento enviada',
+            'job_id' => $jobId
+        ]);
+    }
+
+    /**
+     * Status do relatório (fallback para casos sem WebSocket)
+     */
+    public function statusRelatorio(string $jobId)
+    {
+        $userId = auth()->id();
+        
+        // Implementar lógica de verificação de status
+        // Por exemplo, consultar Redis ou banco
+        
+        return response()->json([
+            'job_id' => $jobId,
+            'status' => 'processing', // ou 'completed', 'failed'
+            'user_id' => $userId
+        ]);
+    }
+    
+    /**
+     * Download de relatório gerado
+     */
+    public function downloadRelatorio(string $filename)
+    {
+        $disk = config('filesystems.pdf_disk', 'pdfs');
+        
+        if (!Storage::disk($disk)->exists($filename)) {
+            return response()->json([
+                'message' => 'Arquivo não encontrado'
+            ], 404);
+        }
+        
+        return Storage::disk($disk)->download($filename);
+    }
+
     /**
      * Verifica o status de um relatório PDF gerado
      */

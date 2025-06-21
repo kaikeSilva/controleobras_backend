@@ -1,453 +1,669 @@
-# 🚀 Plano de Ação: Modernização da Dockerização
+# Guia Backend: Implementação WebSockets para Relatórios PDF
 
-## **📊 Diagnóstico dos Arquivos Atuais**
-
-### **✅ Arquivos Base Identificados:**
-- `Dockerfile.production` → será base para novo `Dockerfile`
-- `docker/entrypoint.prod.sh` → será base para novo `docker/entrypoint.sh`
-- `docker-compose.prod.yaml` → será base para nova estrutura modular
-- `.env` → será reorganizado em múltiplos arquivos de ambiente
+## 📋 Pré-requisitos Verificados
+- ✅ Laravel Reverb configurado
+- ✅ Redis funcionando
+- ✅ Queue worker ativo
+- ✅ Broadcasting configurado
 
 ---
 
-## **📁 Nova Estrutura de Pastas**
+## 🏗️ Implementação Backend - Passo a Passo
 
-```
-controleobras/
-├── docker/
-│   ├── entrypoint.sh                 # ← Baseado em entrypoint.prod.sh
-│   ├── nginx/
-│   │   ├── default.conf              # ← Manter como está
-│   │   └── entrypoint.sh             # ← Manter como está
-│   ├── compose/
-│   │   ├── docker-compose.base.yml   # ← Extraído de docker-compose.prod.yaml
-│   │   ├── docker-compose.dev.yml    # ← Novo (overrides para dev)
-│   │   └── docker-compose.prod.yml   # ← Extraído de docker-compose.prod.yaml
-│   └── env/
-│       ├── .env.development          # ← Baseado no .env atual
-│       └── .env.production           # ← Baseado no .env atual
-├── pdf-service/
-│   └── Dockerfile                    # ← Manter inalterado (já está correto)
-├── Dockerfile                        # ← Baseado em Dockerfile.production
-└── .env                             # ← Manter como está (para compatibilidade)
-```
+### Etapa 1: Criar os Eventos de PDF
 
----
-
-## **🔧 Transformações Arquivo por Arquivo**
-
-### **1. Dockerfile (Raiz)**
-
-**📋 Base:** Copie `Dockerfile.production` para `Dockerfile`
-
-**🔄 Mudanças Necessárias:**
-
-```dockerfile
-# COPIAR TODO O CONTEÚDO de Dockerfile.production
-
-# ❌ REMOVER esta linha:
-# COPY docker/entrypoint.prod.sh /usr/local/bin/entrypoint.sh
-
-# ✅ SUBSTITUIR por:
-COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-
-# ✅ ADICIONAR após a linha ENV PUPPETEER_EXECUTABLE_PATH=...
-# Configuração flexível de ambiente
-ARG APP_ENV=production
-ENV APP_ENV=${APP_ENV} \
-    INSTALL_DEV_DEPS=false \
-    LOG_LEVEL=info
-
-# ✅ MANTER todo o resto inalterado
-```
-
-**💡 Resultado:** Dockerfile único que detecta ambiente via `APP_ENV` mas mantém toda funcionalidade existente.
-
----
-
-### **2. docker/entrypoint.sh**
-
-**📋 Base:** Copie `docker/entrypoint.prod.sh` para `docker/entrypoint.sh`
-
-**🔄 Mudanças Necessárias:**
-
+#### 1.1 Evento: PdfGenerationStarted
 ```bash
-#!/bin/bash
-set -e
+php artisan make:event PdfGenerationStarted
+```
 
-# ✅ MANTER todo o debug inicial
-echo "=== ENTRYPOINT DEBUG ==="
-echo "CONTAINER_ROLE: $CONTAINER_ROLE"
-echo "USER: $(whoami)"
-echo "PWD: $(pwd)"
-echo "PHP VERSION: $(php --version | head -n1)"
-echo "========================"
+**Arquivo**: `app/Events/PdfGenerationStarted.php`
+```php
+<?php
 
-# ✅ ADICIONAR NOVA SEÇÃO antes do "Aguardar dependências"
-# Configuração por ambiente
-APP_ENV="${APP_ENV:-production}"
-echo "🚀 Ambiente detectado: $APP_ENV"
+namespace App\Events;
 
-configure_environment() {
-    case "$APP_ENV" in
-        "local"|"development")
-            echo "🔧 Configurando modo desenvolvimento..."
-            # Instalar dependências de dev se solicitado
-            if [ "$INSTALL_DEV_DEPS" = "true" ]; then
-                echo "📦 Instalando dependências de desenvolvimento..."
-                composer install --dev --no-interaction || true
-            fi
-            # Configurações mais permissivas para dev
-            export DB_CONNECTION_TIMEOUT=30
-            export QUEUE_RETRY_AFTER=30
-            ;;
-        "production")
-            echo "🚀 Configurando modo produção..."
-            # Configurações otimizadas para produção
-            export DB_CONNECTION_TIMEOUT=10
-            export QUEUE_RETRY_AFTER=300
-            ;;
-    esac
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
+class PdfGenerationStarted implements ShouldBroadcast
+{
+    use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public function __construct(
+        public string $jobId,
+        public int $userId,
+        public string $filename,
+        public string $reportType = 'gastos'
+    ) {}
+
+    /**
+     * Canal privado específico do usuário
+     */
+    public function broadcastOn(): array
+    {
+        return [
+            new PrivateChannel("pdf.{$this->userId}")
+        ];
+    }
+
+    /**
+     * Nome do evento no frontend
+     */
+    public function broadcastAs(): string
+    {
+        return 'pdf.generation.started';
+    }
+
+    /**
+     * Dados enviados para o frontend
+     */
+    public function broadcastWith(): array
+    {
+        return [
+            'job_id' => $this->jobId,
+            'filename' => $this->filename,
+            'report_type' => $this->reportType,
+            'status' => 'started',
+            'timestamp' => now()->toISOString(),
+            'message' => 'Geração do relatório iniciada'
+        ];
+    }
+}
+```
+
+#### 1.2 Evento: PdfGenerationProgress
+```bash
+php artisan make:event PdfGenerationProgress
+```
+
+**Arquivo**: `app/Events/PdfGenerationProgress.php`
+```php
+<?php
+
+namespace App\Events;
+
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
+class PdfGenerationProgress implements ShouldBroadcast
+{
+    use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public function __construct(
+        public string $jobId,
+        public int $userId,
+        public int $progressPercentage,
+        public string $currentStep
+    ) {}
+
+    public function broadcastOn(): array
+    {
+        return [
+            new PrivateChannel("pdf.{$this->userId}")
+        ];
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'pdf.generation.progress';
+    }
+
+    public function broadcastWith(): array
+    {
+        return [
+            'job_id' => $this->jobId,
+            'progress' => $this->progressPercentage,
+            'current_step' => $this->currentStep,
+            'status' => 'processing',
+            'timestamp' => now()->toISOString()
+        ];
+    }
+}
+```
+
+#### 1.3 Evento: PdfGenerationCompleted
+```bash
+php artisan make:event PdfGenerationCompleted
+```
+
+**Arquivo**: `app/Events/PdfGenerationCompleted.php`
+```php
+<?php
+
+namespace App\Events;
+
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
+
+class PdfGenerationCompleted implements ShouldBroadcast
+{
+    use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public function __construct(
+        public string $jobId,
+        public int $userId,
+        public string $filename,
+        public string $downloadUrl
+    ) {}
+
+    public function broadcastOn(): array
+    {
+        return [
+            new PrivateChannel("pdf.{$this->userId}")
+        ];
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'pdf.generation.completed';
+    }
+
+    public function broadcastWith(): array
+    {
+        $disk = config('filesystems.pdf_disk', 'pdfs');
+        $fileSize = Storage::disk($disk)->exists($this->filename) 
+            ? Storage::disk($disk)->size($this->filename) 
+            : 0;
+
+        return [
+            'job_id' => $this->jobId,
+            'filename' => $this->filename,
+            'download_url' => $this->downloadUrl,
+            'file_size' => $fileSize,
+            'file_size_formatted' => $this->formatFileSize($fileSize),
+            'status' => 'completed',
+            'timestamp' => now()->toISOString(),
+            'message' => 'Relatório gerado com sucesso'
+        ];
+    }
+
+    private function formatFileSize(int $bytes): string
+    {
+        if ($bytes >= 1024 * 1024) {
+            return round($bytes / (1024 * 1024), 2) . ' MB';
+        } elseif ($bytes >= 1024) {
+            return round($bytes / 1024, 2) . ' KB';
+        }
+        return $bytes . ' bytes';
+    }
+}
+```
+
+#### 1.4 Evento: PdfGenerationFailed
+```bash
+php artisan make:event PdfGenerationFailed
+```
+
+**Arquivo**: `app/Events/PdfGenerationFailed.php`
+```php
+<?php
+
+namespace App\Events;
+
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
+class PdfGenerationFailed implements ShouldBroadcast
+{
+    use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public function __construct(
+        public string $jobId,
+        public int $userId,
+        public string $errorMessage,
+        public int $retryCount = 0
+    ) {}
+
+    public function broadcastOn(): array
+    {
+        return [
+            new PrivateChannel("pdf.{$this->userId}")
+        ];
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'pdf.generation.failed';
+    }
+
+    public function broadcastWith(): array
+    {
+        return [
+            'job_id' => $this->jobId,
+            'error_message' => $this->errorMessage,
+            'retry_count' => $this->retryCount,
+            'can_retry' => $this->retryCount < 3,
+            'status' => 'failed',
+            'timestamp' => now()->toISOString(),
+            'message' => 'Falha na geração do relatório'
+        ];
+    }
+}
+```
+
+---
+
+### Etapa 2: Configurar Autorização de Canais
+
+#### 2.1 Criar/Atualizar routes/channels.php
+```php
+<?php
+
+use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Auth;
+
+/*
+|--------------------------------------------------------------------------
+| Broadcast Channels
+|--------------------------------------------------------------------------
+*/
+
+// Canal privado para notificações de PDF do usuário
+Broadcast::channel('pdf.{userId}', function ($user, $userId) {
+    // Usuário só pode acessar seu próprio canal
+    return (int) $user->id === (int) $userId;
+});
+
+// Canal de teste (manter o existente se houver)
+Broadcast::channel('message-channel', function ($user) {
+    return true; // ou sua lógica específica
+});
+```
+
+---
+
+### Etapa 3: Criar Serviço de Notificações
+
+#### 3.1 Criar PdfNotificationService
+```bash
+php artisan make:class Services/PdfNotificationService
+```
+
+**Arquivo**: `app/Services/PdfNotificationService.php`
+```php
+<?php
+
+namespace App\Services;
+
+use App\Events\PdfGenerationStarted;
+use App\Events\PdfGenerationProgress;
+use App\Events\PdfGenerationCompleted;
+use App\Events\PdfGenerationFailed;
+use Illuminate\Support\Facades\Log;
+
+class PdfNotificationService
+{
+    /**
+     * Notificar início da geração
+     */
+    public function notifyStarted(string $jobId, int $userId, string $filename, string $reportType = 'gastos'): void
+    {
+        Log::info("PDF generation started", [
+            'job_id' => $jobId,
+            'user_id' => $userId,
+            'filename' => $filename,
+            'report_type' => $reportType
+        ]);
+
+        broadcast(new PdfGenerationStarted($jobId, $userId, $filename, $reportType));
+    }
+
+    /**
+     * Notificar progresso da geração
+     */
+    public function notifyProgress(string $jobId, int $userId, int $progressPercentage, string $currentStep): void
+    {
+        Log::debug("PDF generation progress", [
+            'job_id' => $jobId,
+            'user_id' => $userId,
+            'progress' => $progressPercentage,
+            'step' => $currentStep
+        ]);
+
+        broadcast(new PdfGenerationProgress($jobId, $userId, $progressPercentage, $currentStep));
+    }
+
+    /**
+     * Notificar conclusão da geração
+     */
+    public function notifyCompleted(string $jobId, int $userId, string $filename, string $downloadUrl): void
+    {
+        Log::info("PDF generation completed", [
+            'job_id' => $jobId,
+            'user_id' => $userId,
+            'filename' => $filename,
+            'download_url' => $downloadUrl
+        ]);
+
+        broadcast(new PdfGenerationCompleted($jobId, $userId, $filename, $downloadUrl));
+    }
+
+    /**
+     * Notificar falha na geração
+     */
+    public function notifyFailed(string $jobId, int $userId, string $errorMessage, int $retryCount = 0): void
+    {
+        Log::error("PDF generation failed", [
+            'job_id' => $jobId,
+            'user_id' => $userId,
+            'error' => $errorMessage,
+            'retry_count' => $retryCount
+        ]);
+
+        broadcast(new PdfGenerationFailed($jobId, $userId, $errorMessage, $retryCount));
+    }
+
+    /**
+     * Gerar um job ID único
+     */
+    public function generateJobId(): string
+    {
+        return 'pdf_' . uniqid() . '_' . time();
+    }
+}
+```
+
+---
+
+### Etapa 4: Modificar o Job Existente
+
+#### 4.1 Atualizar GeneratePdfJob
+**Arquivo**: `app/Jobs/GeneratePdfJob.php`
+```php
+<?php
+
+namespace App\Jobs;
+
+use App\Services\PdfNotificationService;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
+
+class GeneratePdfJob implements ShouldQueue
+{
+    use Dispatchable, Queueable, SerializesModels;
+
+    public int $tries = 3;
+    public int $maxExceptions = 3;
+    public int $timeout = 240;
+
+    public function __construct(
+        public string $view,
+        public array  $data,
+        public string $filename,
+        public string $jobId,
+        public int    $userId,
+        public array  $options = [],
+    ) {}
+
+    public function handle(): void
+    {
+        $notificationService = app(PdfNotificationService::class);
+
+        try {
+            // 1. Notificar início
+            $notificationService->notifyStarted(
+                $this->jobId, 
+                $this->userId, 
+                $this->filename
+            );
+
+            // 2. Progresso: Renderizando HTML
+            $notificationService->notifyProgress(
+                $this->jobId, 
+                $this->userId, 
+                25, 
+                'Preparando dados do relatório'
+            );
+
+            $html = view($this->view, $this->data)->render();
+
+            // 3. Progresso: Enviando para serviço PDF
+            $notificationService->notifyProgress(
+                $this->jobId, 
+                $this->userId, 
+                50, 
+                'Gerando arquivo PDF'
+            );
+
+            $response = Http::timeout(240)
+                ->post(config('services.pdf.url', env('PDF_SERVICE_URL')), [
+                    'html'    => $html,
+                    'options' => $this->options,
+                ]);
+
+            if ($response->failed()) {
+                throw new \RuntimeException('PDF service error: '.$response->body());
+            }
+
+            // 4. Progresso: Salvando arquivo
+            $notificationService->notifyProgress(
+                $this->jobId, 
+                $this->userId, 
+                75, 
+                'Salvando arquivo'
+            );
+
+            Storage::disk(config('filesystems.pdf_disk', 'pdfs'))
+                ->put($this->filename, $response->body());
+
+            // 5. Progresso: Finalizado
+            $notificationService->notifyProgress(
+                $this->jobId, 
+                $this->userId, 
+                100, 
+                'Concluído'
+            );
+
+            // 6. Notificar conclusão
+            $downloadUrl = route('dashboard.download.relatorio', $this->filename);
+            $notificationService->notifyCompleted(
+                $this->jobId, 
+                $this->userId, 
+                $this->filename, 
+                $downloadUrl
+            );
+
+        } catch (Throwable $e) {
+            $this->handleFailure($e, $notificationService);
+            throw $e;
+        }
+    }
+
+    /**
+     * Tratar falha no job
+     */
+    public function failed(Throwable $exception): void
+    {
+        $notificationService = app(PdfNotificationService::class);
+        $this->handleFailure($exception, $notificationService);
+    }
+
+    private function handleFailure(Throwable $exception, PdfNotificationService $notificationService): void
+    {
+        $retryCount = $this->attempts() - 1;
+        
+        $notificationService->notifyFailed(
+            $this->jobId,
+            $this->userId,
+            $exception->getMessage(),
+            $retryCount
+        );
+    }
+}
+```
+
+---
+
+### Etapa 5: Modificar o Controller
+
+#### 5.1 Atualizar DashboardController
+**Arquivo**: `app/Http/Controllers/Api/DashboardController.php`
+
+**Adicionar no topo da classe:**
+```php
+use App\Services\PdfNotificationService;
+```
+
+**Modificar o método relatorio():**
+```php
+public function relatorio(Request $request)
+{
+    // Definir período padrão se não fornecido
+    $dataInicio = $request->get('data_inicio') 
+        ? $request->get('data_inicio')
+        : Carbon::now()->subMonths(6)->startOfMonth()->format('Y-m-d');
+        
+    $dataFim = $request->get('data_fim') 
+        ? $request->get('data_fim')
+        : Carbon::now()->endOfMonth()->format('Y-m-d');
+
+    $filters = $this->validateFilters($request);
+    $data = [
+        'resumo' => $this->getResumoFinanceiro($filters),
+        'evolucao_mensal' => $this->getEvolucaoMensal($filters),
+        'grafico_data' => $this->getGraficoData($filters),
+    ];
+
+    // Buscar gastos detalhados para a tabela
+    $gastos = Gasto::with(['categoriaGasto', 'obra', 'fontePagadora'])
+        ->when(!empty($filters['obras']), fn($q) => $q->whereIn('obra_id', $filters['obras']))
+        ->when(!empty($filters['categorias_gasto']), fn($q) => $q->whereIn('categoria_gasto_id', $filters['categorias_gasto']))
+        ->whereBetween('data_pagamento', [$dataInicio, $dataFim])
+        ->whereNotNull('data_pagamento')
+        ->orderBy('data_pagamento', 'desc')
+        ->get();
+
+    $data['gastos'] = $gastos;
+
+    // Gerar IDs únicos
+    $notificationService = app(PdfNotificationService::class);
+    $jobId = $notificationService->generateJobId();
+    $filename = 'relatorio_gastos_' . now()->format('Ymd_His') . '.pdf';
+    $userId = auth()->id();
+    
+    // Dispatch do job para a fila COM notificações
+    dispatch(new GeneratePdfJob(
+        view: 'reports.gastos',
+        data: ['data' => $data],
+        filename: $filename,
+        jobId: $jobId,
+        userId: $userId,
+        options: [
+            'landscape' => true,
+            'format' => 'a4',
+            'margin' => [
+                'top' => '10mm',
+                'right' => '10mm',
+                'bottom' => '10mm',
+                'left' => '10mm'
+            ]
+        ],
+    ))->onQueue('pdf');
+    
+    // Retornar resposta com job_id
+    return response()->json([
+        'message' => 'Relatório está sendo gerado',
+        'job_id' => $jobId,
+        'filename' => $filename,
+        'status' => 'processing',
+        'websocket_channel' => "private-pdf.{$userId}"
+    ]);
+}
+```
+
+**Adicionar novos métodos:**
+```php
+/**
+ * Cancelar geração de relatório
+ */
+public function cancelarRelatorio(Request $request)
+{
+    $jobId = $request->get('job_id');
+    $userId = auth()->id();
+    
+    // Aqui você implementaria a lógica para cancelar o job
+    // Por exemplo, usando Redis para sinalizar cancelamento
+    
+    return response()->json([
+        'message' => 'Solicitação de cancelamento enviada',
+        'job_id' => $jobId
+    ]);
 }
 
-# ✅ EXECUTAR configuração
-configure_environment
-
-# ✅ MANTER TODA a seção "Aguardar dependências" igual
-if [ "$CONTAINER_ROLE" = "app" ] || [ "$CONTAINER_ROLE" = "websocket" ] || [ "$CONTAINER_ROLE" = "queue" ] || [ "$CONTAINER_ROLE" = "scheduler" ]; then
-    # ... (copiar exatamente como está)
-fi
-
-# ✅ MODIFICAR apenas a seção "app" no case:
-case "$CONTAINER_ROLE" in
-    "app")
-        # ✅ MANTER: criação do banco
-        echo "Criando banco, se necessário..."
-        mariadb --ssl=OFF \
-                -h "$DB_HOST" -u"$DB_USERNAME" -p"$DB_PASSWORD" \
-                -e "CREATE DATABASE IF NOT EXISTS \`$DB_DATABASE\` \
-                    CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-
-        # ✅ SUBSTITUIR a seção de cache por esta lógica condicional:
-        echo "Configurando caches Laravel..."
-        php artisan route:clear   || true
-        php artisan config:clear  || true
-        php artisan view:clear    || true
-        
-        if [ "$APP_ENV" = "production" ]; then
-            echo "🚀 Aplicando caches de produção..."
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-        else
-            echo "🔧 Modo desenvolvimento - sem cache agressivo"
-            # Executar discovery para dev
-            php artisan package:discover --ansi || true
-        fi
-
-        # ✅ ADICIONAR antes das migrações:
-        if [ "$APP_ENV" = "local" ] || [ "$APP_ENV" = "development" ]; then
-            # Storage link para desenvolvimento
-            php artisan storage:link || true
-            
-            # Seeders apenas em desenvolvimento
-            if [ "$RUN_SEEDERS" = "true" ]; then
-                echo "🌱 Executando seeders..."
-                php artisan db:seed --force || true
-            fi
-        fi
-
-        # ✅ MANTER: migrações e inicio do PHP-FPM exatamente igual
-        echo "Rodando migrações..."
-        php artisan migrate --force
-
-        echo "Iniciando PHP-FPM..."
-        exec php-fpm -F
-        ;;
-
-    # ✅ MANTER todos os outros cases (websocket, queue, scheduler, *) EXATAMENTE iguais
-    "websocket")
-        # ... (copiar exatamente)
-    "queue")
-        # ... (copiar exatamente)
-    "scheduler")
-        # ... (copiar exatamente)
-    *)
-        # ... (copiar exatamente)
-esac
-```
-
----
-
-### **3. docker/compose/docker-compose.base.yml**
-
-**📋 Base:** Extrair de `docker-compose.prod.yaml`
-
-**🔄 Processo:**
-
-```yaml
-# ✅ COPIAR a estrutura básica de docker-compose.prod.yaml
-
-version: '3.8'
-
-services:
-  # ✅ MODIFICAR apenas estas linhas no serviço php:
-  php:
-    build:
-      context: .
-      dockerfile: Dockerfile  # ← REMOVER .production
-      target: php
-      args:
-        - USER_ID=${USER_ID:-1000}
-        - GROUP_ID=${GROUP_ID:-1000}
-        - APP_ENV=${APP_ENV:-production}  # ← ADICIONAR
-    image: ${APP_NAME:-controleobras}-app:latest
-    container_name: ${APP_NAME:-controleobras}-php
-    restart: always
-    env_file:
-      - .env  # ← MANTER compatibilidade
-    environment:
-      - CONTAINER_ROLE=app
-      - APP_ENV=${APP_ENV:-production}  # ← ADICIONAR
-    # ✅ MANTER todo o resto (volumes, depends_on, networks, etc.) IGUAL
-
-  # ✅ APLICAR o mesmo padrão para websocket, queue, scheduler:
-  websocket:
-    build:
-      context: .
-      dockerfile: Dockerfile  # ← REMOVER .production
-      target: php
-      args:
-        - USER_ID=${USER_ID:-1000}
-        - GROUP_ID=${GROUP_ID:-1000}
-        - APP_ENV=${APP_ENV:-production}  # ← ADICIONAR
-    # ✅ MANTER todo o resto igual, apenas adicionar:
-    environment:
-      - CONTAINER_ROLE=websocket
-      - APP_ENV=${APP_ENV:-production}  # ← ADICIONAR
-
-  # ✅ MANTER TODOS os outros serviços (db, redis, nginx, pdf-service) EXATAMENTE iguais
-  db:
-    # ... (copiar exatamente de docker-compose.prod.yaml)
-  
-  redis:
-    # ... (copiar exatamente de docker-compose.prod.yaml)
+/**
+ * Status do relatório (fallback para casos sem WebSocket)
+ */
+public function statusRelatorio(string $jobId)
+{
+    $userId = auth()->id();
     
-  nginx:
-    # ... (copiar exatamente de docker-compose.prod.yaml)
+    // Implementar lógica de verificação de status
+    // Por exemplo, consultar Redis ou banco
     
-  pdf-service:
-    # ... (copiar exatamente de docker-compose.prod.yaml)
-
-# ✅ MANTER volumes e networks EXATAMENTE iguais
-volumes:
-  # ... (copiar de docker-compose.prod.yaml)
-
-networks:
-  # ... (copiar de docker-compose.prod.yaml)
+    return response()->json([
+        'job_id' => $jobId,
+        'status' => 'processing', // ou 'completed', 'failed'
+        'user_id' => $userId
+    ]);
+}
 ```
 
 ---
 
-### **4. docker/compose/docker-compose.dev.yml**
+### Etapa 6: Atualizar Rotas
 
-**📋 Base:** Novo arquivo (override para desenvolvimento)
+#### 6.1 Modificar routes/api.php
+**Adicionar após as rotas do dashboard existentes:**
+```php
+// Relatórios PDF com WebSocket
+Route::prefix('relatorios')->middleware('auth:sanctum')->group(function () {
+    Route::post('gastos', [DashboardController::class, 'relatorio'])->name('relatorio');
+    Route::delete('cancelar', [DashboardController::class, 'cancelarRelatorio']);
+    Route::get('status/{jobId}', [DashboardController::class, 'statusRelatorio']);
+    Route::get('download/{filename}', [DashboardController::class, 'downloadRelatorio'])->name('dashboard.download.relatorio');
+});
 
-**🔄 Criação:**
-
-```yaml
-version: '3.8'
-
-# ✅ CRIAR do zero - overrides para desenvolvimento
-services:
-  php:
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-      - INSTALL_DEV_DEPS=true
-      - RUN_SEEDERS=true
-    volumes:
-      - .:/var/www  # ← Hot reload para desenvolvimento
-    ports:
-      - "9000:9000"  # ← Expor PHP-FPM para debug
-
-  websocket:
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-
-  queue:
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-      - QUEUE_NAMES=default  # ← Filas mais simples em dev
-
-  scheduler:
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-
-  # ✅ NGINX com configuração para desenvolvimento
-  nginx:
-    ports:
-      - "8080:80"  # ← Porta padrão para dev
-
-  # ✅ REMOVER deploy constraints para desenvolvimento
-  # (não adicionar seções deploy nos overrides)
+// Manter rota legacy para compatibilidade (opcional)
+Route::get('relatorios/gastos', [DashboardController::class, 'relatorio'])->name('relatorio.legacy')->middleware('auth:sanctum');
 ```
 
 ---
 
-### **5. docker/compose/docker-compose.prod.yml**
+## ✅ Checklist de Implementação
 
-**📋 Base:** Extrair configurações de produção de `docker-compose.prod.yaml`
-
-**🔄 Processo:**
-
-```yaml
-version: '3.8'
-
-# ✅ EXTRAIR apenas as configurações específicas de produção
-services:
-  php:
-    environment:
-      - APP_ENV=production
-      - APP_DEBUG=false
-    # ✅ COPIAR as seções deploy, security_opt, healthcheck de docker-compose.prod.yaml
-    deploy:
-      # ... (copiar exatamente)
-    security_opt:
-      # ... (copiar exatamente)
-    healthcheck:
-      # ... (copiar exatamente)
-
-  websocket:
-    environment:
-      - APP_ENV=production
-      - APP_DEBUG=false
-    deploy:
-      # ... (copiar de docker-compose.prod.yaml)
-    security_opt:
-      # ... (copiar de docker-compose.prod.yaml)
-    healthcheck:
-      # ... (copiar de docker-compose.prod.yaml)
-
-  # ✅ REPETIR padrão para queue e scheduler
-  # ✅ MANTER todas as configurações de produção (deploy, security, health)
-```
+- [ ] 1. Criar 4 eventos de PDF
+- [ ] 2. Configurar canais em `routes/channels.php`
+- [ ] 3. Criar `PdfNotificationService`
+- [ ] 4. Modificar `GeneratePdfJob`
+- [ ] 5. Atualizar `DashboardController`
+- [ ] 6. Atualizar rotas
+- [ ] 7. Testar com usuário real (solicitar ao usuario que ele teste)
 
 ---
 
-### **6. docker/env/.env.development**
-
-**📋 Base:** Copiar `.env` atual
-
-**🔄 Mudanças:**
-
-```bash
-# ✅ COPIAR TODO o conteúdo do .env atual
-
-# ✅ MODIFICAR apenas estas linhas:
-APP_ENV=local  # ← em vez de production
-APP_DEBUG=true  # ← em vez de false
-
-# ✅ ADICIONAR estas novas variáveis:
-INSTALL_DEV_DEPS=true
-RUN_SEEDERS=true
-LOG_LEVEL=debug
-
-# ✅ MANTER todas as outras configurações iguais
-```
-
----
-
-### **7. docker/env/.env.production**
-
-**📋 Base:** Copiar `.env` atual
-
-**🔄 Mudanças:**
-
-```bash
-# ✅ COPIAR TODO o conteúdo do .env atual
-
-# ✅ MANTER APP_ENV=production (já está correto)
-
-# ✅ ADICIONAR estas novas variáveis:
-INSTALL_DEV_DEPS=false
-RUN_SEEDERS=false
-
-# ✅ MANTER todas as outras configurações iguais
-```
-
----
-
----
-
-## **📋 Checklist de Migração**
-
-### **Fase 1: Preparação**
-- [ ] Criar pasta `docker/compose/`
-- [ ] Criar pasta `docker/env/`
-- [ ] Copiar `Dockerfile.production` → `Dockerfile` com modificações
-- [ ] Copiar `entrypoint.prod.sh` → `docker/entrypoint.sh` com modificações
-- [ ] Criar `docker-compose.base.yml` baseado no atual
-- [ ] Criar `docker-compose.dev.yml` e `docker-compose.prod.yml`
-- [ ] Criar arquivos de environment
-
-### **Fase 2: Teste**
-- [ ] Testar build: `docker build -t test .`
-- [ ] Testar desenvolvimento: 
-  ```bash
-  docker-compose -f docker/compose/docker-compose.base.yml \
-                 -f docker/compose/docker-compose.dev.yml \
-                 --env-file docker/env/.env.development up -d
-  ```
-- [ ] Validar todas as funcionalidades
-- [ ] Testar produção:
-  ```bash
-  docker-compose -f docker/compose/docker-compose.base.yml \
-                 -f docker/compose/docker-compose.prod.yml \
-                 --env-file docker/env/.env.production up -d
-  ```
-
-### **Fase 3: Cleanup**
-- [ ] Remover `Dockerfile.production`
-- [ ] Remover `docker/entrypoint.prod.sh`
-- [ ] Remover `docker-compose.prod.yaml`
-- [ ] Atualizar documentação
-
-## **🎯 Comandos de Uso Final**
-
-### **Para Desenvolvimento:**
-```bash
-docker-compose -f docker/compose/docker-compose.base.yml \
-               -f docker/compose/docker-compose.dev.yml \
-               --env-file docker/env/.env.development \
-               up -d --build
-```
-
-### **Para Produção:**
-```bash
-docker-compose -f docker/compose/docker-compose.base.yml \
-               -f docker/compose/docker-compose.prod.yml \
-               --env-file docker/env/.env.production \
-               up -d --build
-```
-
-**🎯 Resultado:** Estrutura moderna mantendo 100% da funcionalidade atual!
-
-### **💡 Como usar após a migração:**
-
-**Desenvolvimento:**
-```bash
-docker-compose -f docker/compose/docker-compose.base.yml \
-               -f docker/compose/docker-compose.dev.yml \
-               --env-file docker/env/.env.development up -d
-```
-
-**Produção:**
-```bash
-docker-compose -f docker/compose/docker-compose.base.yml \
-               -f docker/compose/docker-compose.prod.yml \
-               --env-file docker/env/.env.production up -d
-```
+O agente deve implementar os passos acima e se manter no escopo da tarefa, ou seja, ele não deve implementar mais coisas que não estão no checklist acima.
+qualque duvida de como agir deve ser perguntada ao usuario.
