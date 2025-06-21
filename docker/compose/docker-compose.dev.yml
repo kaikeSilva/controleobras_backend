@@ -1,33 +1,112 @@
-# Overrides para ambiente de desenvolvimento
+version: "3.9"
+
 services:
-  php:
+  # -------------------------------------------------------------------------
+  # Redis (cache & filas)
+  # -------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: ${APP_NAME:-controleobras}-redis
+    restart: always
     environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-      - INSTALL_DEV_DEPS=true
-      - RUN_SEEDERS=true
+      - REDIS_PASSWORD=secret
     volumes:
-      - .:/var/www  # Hot reload para desenvolvimento
-    ports:
-      - "9000:9000"  # Expor PHP-FPM para debug
+      - redis_data:/data
+    networks:
+      - app-network
+    command: ["redis-server", "--requirepass", "secret", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "secret", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
-  websocket:
+
+  # -------------------------------------------------------------------------
+  # Laravel - app (php artisan serve para DEV + hot-reload)
+  # -------------------------------------------------------------------------
+  app:
+    image: controleobras-app:latest   # ➜ NÃO reconstrói
+    container_name: controleobras-app-dev
+    entrypoint: []                    # ignora o entrypoint que rodava php-fpm
+    command: php artisan serve --host=0.0.0.0 --port=8000
+    working_dir: /var/www
+    ports: ["8000:8000"]              # http://localhost:8000
+    env_file: .env
+    networks:
+      - app-network
     environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
+      APP_ENV: local
+      APP_DEBUG: "true"
+      REDIS_HOST: redis
+    volumes:
+      # monta TODO o código para recarregar a cada salvamento
+      - .:/var/www
+      # preserva o vendor da imagem (evita conflitar com o host)
+      - vendor:/var/www/vendor
+      - /var/www/bootstrap/cache
+    depends_on: [redis]
 
+  # -------------------------------------------------------------------------
+  # Worker de filas
+  # -------------------------------------------------------------------------
   queue:
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
-      - QUEUE_NAMES=default  # Filas mais simples em dev
+    image: controleobras-queue:latest
+    container_name: controleobras-queue-dev
+    entrypoint: []
+    command: php artisan queue:work --sleep=1 --tries=3
+    working_dir: /var/www
+    env_file: .env
+    networks:
+      - app-network
+    volumes:
+      - .:/var/www
+      - vendor:/var/www/vendor
+    depends_on: [app, redis]
 
+  # -------------------------------------------------------------------------
+  # Scheduler (cron do Laravel)
+  # -------------------------------------------------------------------------
   scheduler:
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
+    image: controleobras-scheduler:latest
+    container_name: controleobras-scheduler-dev
+    entrypoint: []
+    command: php artisan schedule:work
+    working_dir: /var/www
+    env_file: .env
+    networks:
+      - app-network
+    volumes:
+      - .:/var/www
+      - vendor:/var/www/vendor
+    depends_on: [app, redis]
 
-  # NGINX com configuração para desenvolvimento
-  nginx:
-    ports:
-      - "8080:80"  # Porta padrão para dev
+  # -------------------------------------------------------------------------
+  # Vite em modo dev (live-reload de JS/CSS/Blade)
+  # -------------------------------------------------------------------------
+  vite:
+    image: node:22-alpine
+    container_name: vite-dev
+    working_dir: /var/www
+    networks:
+      - app-network
+    entrypoint: /bin/sh
+    command: -c "npm install && npm run dev -- --host"
+    environment:
+      CHOKIDAR_USEPOLLING: "true"     # garante watch estável em Docker
+    ports: ["5173:5173"]              # HMR: http://localhost:5173
+    volumes:
+      - .:/var/www
+      - node_modules:/var/www/node_modules
+    depends_on: [app]
+
+volumes:
+  vendor:         # armazena 'vendor' gerado na imagem
+  node_modules:   # evita node_modules no host
+  redis_data:     # persistência do Redis
+
+networks:
+  app-network:
+    external: true
+    

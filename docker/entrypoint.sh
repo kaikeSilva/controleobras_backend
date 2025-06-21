@@ -94,10 +94,6 @@ case "$CONTAINER_ROLE" in
         echo "Iniciando PHP-FPM..."
         exec php-fpm -F
         ;;
-    "websocket")
-        echo "Iniciando Laravel Reverb..."
-        exec php artisan reverb:start --host=0.0.0.0 --port=6001
-        ;;
     "queue")
         echo "Iniciando Queue Worker..."
         # usa valor da env, cai para 'default' se não existir
