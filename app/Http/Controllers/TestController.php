@@ -118,10 +118,10 @@ class TestController extends Controller
         ]);
 
         $payload = [
-            'id' => uniqid(),
-            'timestamp' => now()->toDateTimeString(),
-            'user_info' => 'TestSessionID:' . session()->getId(),
-            'message' => $request->input('message_content'),
+            'id' => 'fsafsd123',
+            'timestamp' => '2025-06-20 18:29:42',
+            'user_info' => 'TestSessionID:123',
+            'message' => 'message_content',
             'event_type' => 'TestMessageEvent'
         ];
 

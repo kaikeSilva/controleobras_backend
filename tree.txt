@@ -1,17 +1,193 @@
-controleobras/
-├── docker/
-│   ├── entrypoint.sh                 # ← Baseado em entrypoint.prod.sh
-│   ├── nginx/
-│   │   ├── default.conf              # ← Manter como está
-│   │   └── entrypoint.sh             # ← Manter como está
-│   ├── compose/
-│   │   ├── docker-compose.base.yml   # ← Extraído de docker-compose.prod.yaml
-│   │   ├── docker-compose.dev.yml    # ← Novo (overrides para dev)
-│   │   └── docker-compose.prod.yml   # ← Extraído de docker-compose.prod.yaml
-│   └── env/
-│       ├── .env.development          # ← Baseado no .env atual
-│       └── .env.production           # ← Baseado no .env atual
-├── pdf-service/
-│   └── Dockerfile                    # ← Manter inalterado (já está correto)
-├── Dockerfile                        # ← Baseado em Dockerfile.production
-└── .env                             # ← Manter como está (para compatibilidade)
+.
+├── app
+│   ├── Events
+│   │   ├── TestMessageEvent.php
+│   │   ├── TestNotificationEvent.php
+│   │   ├── TestWebSocketEvent.php
+│   │   └── WebSocketTestEvent.php
+│   ├── Exceptions
+│   │   └── Handler.php
+│   ├── Http
+│   │   ├── Controllers
+│   │   └── Resources
+│   ├── Jobs
+│   │   ├── AutoTestJob.php
+│   │   ├── GeneratePdfJob.php
+│   │   ├── QueueTestJob.php
+│   │   └── SendTestEmailJob.php
+│   ├── Listeners
+│   │   └── WebSocketTestListener.php
+│   ├── Mail
+│   │   └── TestMail.php
+│   ├── Models
+│   │   ├── CategoriaGasto.php
+│   │   ├── Cliente.php
+│   │   ├── EntradaRecurso.php
+│   │   ├── Exemplo.php
+│   │   ├── FontePagadora.php
+│   │   ├── Gasto.php
+│   │   ├── Obra.php
+│   │   └── User.php
+│   └── Providers
+│       └── AppServiceProvider.php
+├── artisan
+├── bootstrap
+│   ├── app.php
+│   ├── cache
+│   │   └── routes-v7.php
+│   └── providers.php
+├── composer.json
+├── composer.lock
+├── config
+│   ├── app.php
+│   ├── auth.php
+│   ├── broadcasting.php
+│   ├── cache.php
+│   ├── database.php
+│   ├── filesystems.php
+│   ├── logging.php
+│   ├── mail.php
+│   ├── queue.php
+│   ├── reverb.php
+│   ├── sanctum.php
+│   ├── services.php
+│   └── session.php
+├── database
+│   ├── factories
+│   │   ├── CategoriaGastoFactory.php
+│   │   ├── EntradaRecursoFactory.php
+│   │   ├── ExemploFactory.php
+│   │   ├── FontePagadoraFactory.php
+│   │   ├── GastoFactory.php
+│   │   ├── ObraFactory.php
+│   │   └── UserFactory.php
+│   ├── migrations
+│   │   ├── 0001_01_01_000000_create_users_table.php
+│   │   ├── 0001_01_01_000001_create_cache_table.php
+│   │   ├── 0001_01_01_000002_create_jobs_table.php
+│   │   ├── 2025_05_23_192319_create_personal_access_tokens_table.php
+│   │   ├── 2025_05_24_163951_create_clientes_table.php
+│   │   ├── 2025_05_25_190509_create_fonte_pagadoras_table.php
+│   │   ├── 2025_05_25_200910_create_obras_table.php
+│   │   ├── 2025_05_26_110858_create_categoria_gastos_table.php
+│   │   ├── 2025_05_26_135900_create_gastos_table.php
+│   │   ├── 2025_05_26_160845_create_entrada_recursos_table.php
+│   │   └── 2025_06_01_153600_create_exemplos_table.php
+│   └── seeders
+│       ├── CategoriaGastoSeeder.php
+│       ├── ClienteSeeder.php
+│       ├── DatabaseSeeder.php
+│       ├── EntradaRecursoSeeder.php
+│       ├── ExemploSeeder.php
+│       ├── FontePagadoraSeeder.php
+│       ├── GastoSeeder.php
+│       └── ObraSeeder.php
+├── docker
+│   ├── compose
+│   │   ├── docker-compose.base.yml
+│   │   ├── docker-compose.dev.yml
+│   │   └── docker-compose.prod.yml
+│   ├── entrypoint.sh
+│   ├── env
+│   ├── nginx
+│   │   ├── default.conf
+│   │   └── entrypoint.sh
+│   ├── README.md
+│   └── tests
+│       ├── run-tests.sh
+│       ├── test-connectivity.sh
+│       ├── test-laravel.sh
+│       ├── test-queue.sh
+│       └── test-websocket.sh
+├── Dockerfile
+├── docs
+├── laravel
+├── package.json
+├── package-lock.json
+├── pdf-service
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── README.md
+│   ├── src
+│   │   └── server.js
+│   └── tree.txt
+├── phpunit.xml
+├── prompt
+│   ├── agent-guidelines.md
+│   ├── chat-prompt-base.md
+│   ├── documentacao-dados.md
+│   ├── escopo.md
+│   ├── implementacoes_futuras.md
+│   ├── prompt-levantamento-requisitos.md
+│   └── prompt.md
+├── public
+│   ├── build
+│   │   ├── assets
+│   │   └── manifest.json
+│   ├── favicon.ico
+│   ├── index.php
+│   ├── relatorios
+│   ├── robots.txt
+│   └── swagger
+│       ├── authentication.yaml
+│       ├── autocomplete.yaml
+│       ├── categoria-gasto.yaml
+│       ├── client.yaml
+│       ├── dashboard.yaml
+│       ├── entrada-recurso.yaml
+│       ├── exemplo.yaml
+│       ├── fonte-pagadora.yaml
+│       ├── gastos.yml
+│       ├── obra.yaml
+│       └── user.yaml
+├── queue-logs
+│   └── laravel.log
+├── README.md
+├── resources
+│   ├── css
+│   │   └── app.css
+│   ├── js
+│   │   ├── admin_panel.js
+│   │   ├── app.js
+│   │   ├── bootstrap.js
+│   │   └── echo.js
+│   ├── sass
+│   │   └── admin_panel.scss
+│   └── views
+│       ├── emails
+│       ├── home.blade.php
+│       ├── layouts
+│       ├── reports
+│       ├── swagger.blade.php
+│       ├── test-form.blade.php
+│       ├── websocket-status.blade.php
+│       ├── websocket-test.blade.php
+│       └── welcome.blade.php
+├── routes
+│   ├── api.php
+│   ├── channels.php
+│   ├── console.php
+│   └── web.php
+├── storage
+│   ├── app
+│   │   ├── private
+│   │   └── public
+│   ├── framework
+│   │   ├── cache
+│   │   ├── sessions
+│   │   ├── testing
+│   │   └── views
+│   └── logs
+│       └── laravel.log
+├── tests
+│   ├── Feature
+│   │   └── ExampleTest.php
+│   ├── TestCase.php
+│   └── Unit
+│       └── ExampleTest.php
+├── tree_folders.md
+├── tree.txt
+└── vite.config.js
+
+56 directories, 135 files

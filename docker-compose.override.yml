@@ -1,0 +1,28 @@
+# Overrides para ambiente de desenvolvimento
+services:
+  php:
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - INSTALL_DEV_DEPS=true
+      - RUN_SEEDERS=true
+    volumes:
+      - .:/var/www  # Hot reload para desenvolvimento
+    ports:
+      - "9000:9000"  # Expor PHP-FPM para debug
+
+  queue:
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - QUEUE_NAMES=default  # Filas mais simples em dev
+
+  scheduler:
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+
+  # NGINX com configuração para desenvolvimento
+  nginx:
+    ports:
+      - "8080:80"  # Porta padrão para dev

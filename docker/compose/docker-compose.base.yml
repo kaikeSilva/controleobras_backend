@@ -1,28 +1,11 @@
-services:
-  # =============================================================================
-  # PDF SERVICE - Microserviço para geração de PDFs
-  # =============================================================================
-  pdf-service:
-    build: ./pdf-service
-    image: controleobras-pdf:latest
-    container_name: pdf-service-prod
-    restart: unless-stopped
-    networks: [app-network]
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-    healthcheck:
-      test: ["CMD", "curl", "-fs", "http://localhost:3000/health"]
-      interval: 30s
-      retries: 3
 
+services:
   # =============================================================================
   # NGINX - Reverse Proxy e Servidor Web
   # =============================================================================
   nginx:
     image: nginx:alpine
-    container_name: nginx-prod
+    container_name: ${APP_NAME:-controleobras}-nginx
     restart: always
     ports:
       - "8080:80"
@@ -48,18 +31,20 @@ services:
   php:
     build:
       context: .
-      dockerfile: Dockerfile.production
-      target: php          #  ⬅️  aqui
+      dockerfile: Dockerfile
+      target: php
       args:
         - USER_ID=${USER_ID:-1000}
         - GROUP_ID=${GROUP_ID:-1000}
-    image: ${APP_NAME:-laravel}-app:latest
-    container_name: php-app-prod
+        - APP_ENV=${APP_ENV:-production}
+    image: ${APP_NAME:-controleobras}-app:latest
+    container_name: ${APP_NAME:-controleobras}-php
     restart: always
     env_file:
-      - .env.production
+      - .env
     environment:
       - CONTAINER_ROLE=app
+      - APP_ENV=${APP_ENV:-production}
     volumes:
       - app_storage:/var/www/storage
       - app_bootstrap:/var/www/bootstrap/cache
@@ -70,18 +55,8 @@ services:
         condition: service_healthy
     networks:
       - app-network
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
-    security_opt:
-      - no-new-privileges:true
     healthcheck:
-      test: ["CMD", "sh", "-c", "ps aux | grep '[p]hp-fpm' | head -1"]  # Verifica se processo está rodando
+      test: ["CMD", "sh", "-c", "ps aux | grep '[p]hp-fpm' | head -1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -93,18 +68,20 @@ services:
   websocket:
     build:
       context: .
-      dockerfile: Dockerfile.production
+      dockerfile: Dockerfile
       target: php
       args:
         - USER_ID=${USER_ID:-1000}
         - GROUP_ID=${GROUP_ID:-1000}
-    image: ${APP_NAME:-laravel}-websocket:latest
-    container_name: websocket-prod
+        - APP_ENV=${APP_ENV:-production}
+    image: ${APP_NAME:-controleobras}-websocket:latest
+    container_name: ${APP_NAME:-controleobras}-websocket
     restart: always
     env_file:
-      - .env.production
+      - .env
     environment:
       - CONTAINER_ROLE=websocket
+      - APP_ENV=${APP_ENV:-production}
     ports:
       - "6001:6001"
     volumes:
@@ -119,16 +96,6 @@ services:
         condition: service_healthy
     networks:
       - app-network
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.25'
-        reservations:
-          memory: 128M
-          cpus: '0.1'
-    security_opt:
-      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "netcat", "-z", "localhost", "6001"]
       interval: 30s
@@ -142,19 +109,21 @@ services:
   queue:
     build:
       context: .
-      dockerfile: Dockerfile.production
+      dockerfile: Dockerfile
       target: php
       args:
         - USER_ID=${USER_ID:-1000}
         - GROUP_ID=${GROUP_ID:-1000}
-    image: ${APP_NAME:-laravel}-queue:latest
-    container_name: queue-prod
+        - APP_ENV=${APP_ENV:-production}
+    image: ${APP_NAME:-controleobras}-queue:latest
+    container_name: ${APP_NAME:-controleobras}-queue
     restart: always
     env_file:
-      - .env.production
+      - .env
     environment:
       - CONTAINER_ROLE=queue
       - QUEUE_NAMES=pdf,default
+      - APP_ENV=${APP_ENV:-production}
     volumes:
       - app_storage:/var/www/storage
       - app_bootstrap:/var/www/bootstrap/cache
@@ -168,16 +137,6 @@ services:
         condition: service_healthy
     networks:
       - app-network
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
-    security_opt:
-      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "pgrep", "-f", "queue:work"]
       interval: 30s
@@ -191,18 +150,20 @@ services:
   scheduler:
     build:
       context: .
-      dockerfile: Dockerfile.production
+      dockerfile: Dockerfile
       target: php
       args:
         - USER_ID=${USER_ID:-1000}
         - GROUP_ID=${GROUP_ID:-1000}
-    image: ${APP_NAME:-laravel}-scheduler:latest
-    container_name: scheduler-prod
+        - APP_ENV=${APP_ENV:-production}
+    image: ${APP_NAME:-controleobras}-scheduler:latest
+    container_name: ${APP_NAME:-controleobras}-scheduler
     restart: always
     env_file:
-      - .env.production
+      - .env
     environment:
       - CONTAINER_ROLE=scheduler
+      - APP_ENV=${APP_ENV:-production}
     volumes:
       - app_storage:/var/www/storage
       - app_bootstrap:/var/www/bootstrap/cache
@@ -215,23 +176,13 @@ services:
         condition: service_healthy
     networks:
       - app-network
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.25'
-        reservations:
-          memory: 128M
-          cpus: '0.1'
-    security_opt:
-      - no-new-privileges:true
 
   # =============================================================================
   # MYSQL DATABASE
   # =============================================================================
   db:
     image: mysql:8.0
-    container_name: mysql-prod
+    container_name: ${APP_NAME:-controleobras}-mysql
     restart: always
     environment:
       - MYSQL_DATABASE=${DB_DATABASE}
@@ -245,16 +196,6 @@ services:
       --bind-address=0.0.0.0
       --innodb-buffer-pool-size=256M
       --max-connections=100
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
-    security_opt:
-      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
       interval: 10s
@@ -267,7 +208,7 @@ services:
   # =============================================================================
   redis:
     image: redis:7-alpine
-    container_name: redis-prod
+    container_name: ${APP_NAME:-controleobras}-redis
     restart: always
     environment:
       - REDIS_PASSWORD=secret
@@ -276,16 +217,6 @@ services:
     networks:
       - app-network
     command: ["redis-server", "--requirepass", "secret", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.25'
-        reservations:
-          memory: 128M
-          cpus: '0.1'
-    security_opt:
-      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "secret", "ping"]
       interval: 10s
@@ -308,9 +239,3 @@ volumes:
 networks:
   app-network:
     driver: bridge
-
-# comandos
-# docker compose --env-file .env.production   -f docker-compose.prod.yaml build --no-cache
-# docker compose --env-file .env.production   -f docker-compose.prod.yaml up -d
-# docker compose --env-file .env.production   -f docker-compose.prod.yaml down
-

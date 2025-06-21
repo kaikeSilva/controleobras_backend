@@ -1,112 +1,122 @@
 #!/bin/bash
+set -e
 
-# Função para aguardar serviços usando PHP puro
-wait_for_service() {
-    local host=$1
-    local port=$2
-    local service_name=$3
-    
-    echo "Aguardando $service_name em $host:$port..."
-    
-    while true; do
-        if php -r "
-            \$connection = @fsockopen('$host', $port, \$errno, \$errstr, 5);
-            if (\$connection) {
-                fclose(\$connection);
-                exit(0);
-            } else {
-                exit(1);
-            }
-        "; then
-            echo "$service_name está disponível!"
-            break
-        else
-            echo "Aguardando $service_name..."
-            sleep 2
-        fi
-    done
+echo "=== ENTRYPOINT DEBUG ==="
+echo "CONTAINER_ROLE: $CONTAINER_ROLE"
+echo "USER: $(whoami)"
+echo "PWD: $(pwd)"
+echo "PHP VERSION: $(php --version | head -n1)"
+echo "========================"
+
+# Configuração por ambiente
+APP_ENV="${APP_ENV:-production}"
+echo "🚀 Ambiente detectado: $APP_ENV"
+
+configure_environment() {
+    case "$APP_ENV" in
+        "local"|"development")
+            echo "🔧 Configurando modo desenvolvimento..."
+            # Instalar dependências de dev se solicitado
+            if [ "$INSTALL_DEV_DEPS" = "true" ]; then
+                echo "📦 Instalando dependências de desenvolvimento..."
+                composer install --dev --no-interaction || true
+            fi
+            # Configurações mais permissivas para dev
+            export DB_CONNECTION_TIMEOUT=30
+            export QUEUE_RETRY_AFTER=30
+            ;;
+        "production")
+            echo "🚀 Configurando modo produção..."
+            # Configurações otimizadas para produção
+            export DB_CONNECTION_TIMEOUT=10
+            export QUEUE_RETRY_AFTER=300
+            ;;
+    esac
 }
 
-# Instalar dependências do Composer se necessário
-if [ ! -f "vendor/autoload.php" ]; then
-    echo "Instalando dependências do Composer..."
-    composer install --no-progress --no-interaction --optimize-autoloader
-    echo "Composer instalado com sucesso."
-else
-    echo "Composer já está instalado."
+# Executar configuração
+configure_environment
+
+# Aguardar dependências se necessário
+if [ "$CONTAINER_ROLE" = "app" ] || [ "$CONTAINER_ROLE" = "websocket" ] || [ "$CONTAINER_ROLE" = "queue" ] || [ "$CONTAINER_ROLE" = "scheduler" ]; then
+    echo "Aguardando banco de dados..."
+    while ! nc -z mysql_db 3306; do
+        echo "DB ainda não está pronto..."
+        sleep 2
+    done
+    echo "Banco disponível!"
+
+    echo "Aguardando Redis..."
+    while ! nc -z redis 6379; do
+        echo "Redis ainda não está pronto..."
+        sleep 2
+    done
+    echo "Redis disponível!"
 fi
 
-# Criar arquivo .env se não existir
-if [ ! -f ".env" ]; then
-    echo "Criando arquivo .env para ambiente $APP_ENV"
-    cp .env.example .env
-else
-    echo "Arquivo .env já existe."
-fi
+# Executar comando baseado na role
+case "$CONTAINER_ROLE" in
+    "app")
+        echo "Criando banco, se necessário..."
 
-# Aguardar serviços dependentes apenas se não for o serviço node
-role=${CONTAINER_ROLE:-app}
-if [ "$role" != "node" ]; then
-    wait_for_service db 3306 "MySQL"
-    wait_for_service redis 6379 "Redis"
-fi
+        # Configurando caches Laravel
+        echo "Configurando caches Laravel..."
+        php artisan route:clear   || true
+        php artisan config:clear  || true
+        php artisan view:clear    || true
+        
+        if [ "$APP_ENV" = "production" ]; then
+            echo "🚀 Aplicando caches de produção..."
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+        else
+            echo "🔧 Modo desenvolvimento - sem cache agressivo"
+            # Executar discovery para dev
+            php artisan package:discover --ansi || true
+        fi
 
-if [ "$role" = "app" ]; then
-    echo "Iniciando aplicação Laravel..."
-    
-    # Executar migrações e configurações
-    php artisan key:generate --no-interaction || true
-    php artisan migrate --force
-    php artisan config:cache
-    php artisan route:cache
-    php artisan view:cache
-    
-    # Iniciar servidor
-    echo "Iniciando servidor na porta $PORT"
-    exec php artisan serve --port=$PORT --host=0.0.0.0
-    sudo chown -R appuser:appuser /home
-    mkdir -p /home/appuser/.local/share
-    chown -R appuser:appuser /home/appuser/.local/share
+        # Storage link e seeders para desenvolvimento
+        if [ "$APP_ENV" = "local" ] || [ "$APP_ENV" = "development" ]; then
+            # Storage link para desenvolvimento
+            php artisan storage:link || true
+            
+            # Seeders apenas em desenvolvimento
+            if [ "$RUN_SEEDERS" = "true" ]; then
+                echo "🌱 Executando seeders..."
+                php artisan db:seed --force || true
+            fi
+        fi
 
-elif [ "$role" = "queue" ]; then
-    echo "Iniciando worker de filas..."
-    
-    # Mostrar informações de memória (se o comando existir)
-    if command -v free &> /dev/null; then
-        echo "Memória disponível:"
-        free -h
-    else
-        echo "Comando 'free' não disponível, pulando verificação de memória."
-    fi
-    
-    # Limpar caches antes de iniciar
-    php artisan config:cache
-    php artisan queue:clear
-    
-    echo "Iniciando queue worker..."
-    echo "✅ Queue worker pronto para processar jobs!"
-    
-    # Iniciar worker
-    exec php artisan queue:work \
-        --verbose \
-        --tries=3 \
-        --timeout=60 \
-        --memory=128 \
-        --sleep=3 \
-        --max-jobs=100 \
-        --max-time=3600
+        echo "Rodando migrações..."
+        php artisan migrate --force
 
-elif [ "$role" = "websocket" ]; then
-    echo "Configurando e iniciando WebSocket (Reverb)..."
-    
-    # Instalar broadcasting se necessário
-    php artisan install:broadcasting --reverb --no-interaction || true
-    
-    # Iniciar Reverb
-    echo "Iniciando Reverb WebSocket server..."
-    exec php artisan reverb:start --host=0.0.0.0 --port=6001 -vvv
+        echo "Iniciando PHP-FPM..."
+        exec php-fpm -F
+        ;;
+    "websocket")
+        echo "Iniciando Laravel Reverb..."
+        exec php artisan reverb:start --host=0.0.0.0 --port=6001
+        ;;
+    "queue")
+        echo "Iniciando Queue Worker..."
+        # usa valor da env, cai para 'default' se não existir
+        QUEUE_NAMES="${QUEUE_NAMES:-default}"
 
-else
-    echo "Papel do container não reconhecido: $role"
-    exit 1
-fi
+        exec php artisan queue:work redis \
+            --queue="$QUEUE_NAMES" \
+            --verbose --tries=3 --timeout=300
+        ;;
+    "scheduler")
+        echo "Iniciando Laravel schedule:work…"
+        # opcional: alinhar com o início do minuto
+        sleep $((60 - $(date +%S)))
+
+        # ➜ --sleep não existe mais
+        exec php artisan schedule:work --verbose --no-interaction
+        ;;
+    *)
+        echo "CONTAINER_ROLE não definido ou inválido. Iniciando PHP-FPM..."
+        exec php-fpm -F
+        ;;
+esac
