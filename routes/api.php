@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\GastoController;
 use App\Http\Controllers\Api\EntradaRecursoController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ExemploController;
+use App\Http\Controllers\TestController;
 
 Route::apiResource('categorias-gastos', CategoriaGastoController::class)->middleware('auth:sanctum');
 Route::apiResource('gastos', GastoController::class)->middleware('auth:sanctum');
@@ -49,7 +50,7 @@ Route::prefix('relatorios')->middleware('auth:sanctum')->group(function () {
     Route::get('/gastos', [DashboardController::class, 'relatorio'])->name('relatorio');
     
     // Cancelar geração
-    Route::post('/cancelar', [DashboardController::class, 'cancelarRelatorio'])->name('relatorio.cancelar');
+    Route::delete('/cancelar/{jobId}', [DashboardController::class, 'cancelarRelatorio'])->name('relatorio.cancelar');
     
     // Status (fallback para casos sem WebSocket)
     Route::get('/status/{jobId}', [DashboardController::class, 'statusRelatorio'])->name('relatorio.status');
@@ -59,4 +60,10 @@ Route::prefix('relatorios')->middleware('auth:sanctum')->group(function () {
     
     // Verificar existência (legado)
     Route::get('/verificar/{filename}', [DashboardController::class, 'verificarRelatorio'])->name('relatorio.verificar');
+});
+
+// Rotas de teste para WebSockets
+Route::prefix('test')->group(function () {
+    Route::post('/broadcast-message', [TestController::class, 'broadcastTestMessage']);
+    Route::post('/broadcast-notification', [TestController::class, 'broadcastTestNotification']);
 });

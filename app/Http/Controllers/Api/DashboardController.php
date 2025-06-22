@@ -407,9 +407,8 @@ class DashboardController extends Controller
     /**
      * Cancelar geração de relatório
      */
-    public function cancelarRelatorio(Request $request)
+    public function cancelarRelatorio(string $jobId)
     {
-        $jobId = $request->get('job_id');
         $userId = auth()->id();
         
         // Aqui você implementaria a lógica para cancelar o job
@@ -451,7 +450,11 @@ class DashboardController extends Controller
             ], 404);
         }
         
-        return Storage::disk($disk)->download($filename);
+        return Storage::disk($disk)->download(
+            $filename, 
+            'relatorio_gastos.pdf', 
+            ['Content-Type' => 'application/pdf']
+        );
     }
 
     /**
@@ -465,7 +468,7 @@ class DashboardController extends Controller
             return response()->json([
                 'status' => 'completed',
                 'filename' => $filename,
-                'download_url' => route('dashboard.download.relatorio', $filename)
+                'download_url' => route('relatorio.download', $filename)
             ]);
         }
         
@@ -475,25 +478,8 @@ class DashboardController extends Controller
         ]);
     }
     
-    /**
-     * Faz download de um relatório PDF gerado
-     */
-    public function downloadRelatorio(string $filename)
-    {
-        $disk = config('filesystems.pdf_disk', 'pdfs');
-        
-        if (!Storage::disk($disk)->exists($filename)) {
-            return response()->json([
-                'error' => 'Arquivo não encontrado'
-            ], 404);
-        }
-        
-        return Storage::disk($disk)->download(
-            $filename, 
-            'relatorio_gastos.pdf', 
-            ['Content-Type' => 'application/pdf']
-        );
-    }
+    // Método downloadRelatorio removido para evitar duplicação
+    // A implementação foi combinada com o método acima
 
     /**
      * Método auxiliar para debugging (remover em produção)

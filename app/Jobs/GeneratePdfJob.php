@@ -14,7 +14,7 @@ use Throwable;
 
 class GeneratePdfJob implements ShouldQueue
 {
-    use Dispatchable, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 3;
     public int $maxExceptions = 3;
@@ -89,7 +89,9 @@ class GeneratePdfJob implements ShouldQueue
             );
 
             // 6. Notificar conclusão
-            $downloadUrl = route('dashboard.download.relatorio', $this->filename);
+            // Construindo URL manualmente para evitar problemas de resolução de rota no worker
+            $appUrl = config('app.url', 'http://localhost:8000');
+            $downloadUrl = "{$appUrl}/api/relatorios/download/{$this->filename}";
             $notificationService->notifyCompleted(
                 $this->jobId, 
                 $this->userId, 

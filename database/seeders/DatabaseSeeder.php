@@ -28,13 +28,13 @@ class DatabaseSeeder extends Seeder
 
         // Executa os seeders necessários
         $this->call([
-            // \Database\Seeders\ClienteSeeder::class,
-            // \Database\Seeders\ObraSeeder::class,
-            // \Database\Seeders\CategoriaGastoSeeder::class,
-            // \Database\Seeders\FontePagadoraSeeder::class,
-            // \Database\Seeders\GastoSeeder::class,
-            // \Database\Seeders\EntradaRecursoSeeder::class,
-            // \Database\Seeders\ExemploSeeder::class,
+            \Database\Seeders\ClienteSeeder::class,
+            \Database\Seeders\ObraSeeder::class,
+            \Database\Seeders\CategoriaGastoSeeder::class,
+            \Database\Seeders\FontePagadoraSeeder::class,
+            \Database\Seeders\GastoSeeder::class,
+            \Database\Seeders\EntradaRecursoSeeder::class,
+            \Database\Seeders\ExemploSeeder::class,
         ]);
     }
 }

@@ -22,21 +22,22 @@ grep -r "WebSocketTestEvent" app/     # Check class conflicts
 ### PREFER LARAVEL COMMANDS
 ```bash
 # VIA DOCKER (preferred):
-docker compose exec controleobras-app-dev php artisan make:controller ControllerName
-docker compose exec controleobras-app-dev php artisan make:event EventName
-docker compose exec controleobras-app-dev php artisan make:job JobName
-docker compose exec controleobras-app-dev php artisan make:mail MailName
+docker compose exec app php artisan make:controller ControllerName
+docker compose exec app php artisan make:event EventName
+docker compose exec app php artisan make:job JobName
+docker compose exec app php artisan make:mail MailName
+docker compose exec app php artisan make:service ServiceName --invokable  # Para serviços
 
 # CONFIGURATION:
-docker compose exec controleobras-app-dev php artisan config:clear
-docker compose exec controleobras-app-dev composer dump-autoload
+docker compose exec app php artisan config:clear
+docker compose exec app composer dump-autoload
 ```
 
 ### DOCKER EXECUTION RULES
 ```bash
 # CONTAINER-SPECIFIC COMMANDS:
-docker compose exec controleobras-app-dev php [laravel-commands]      # Main app
-docker compose exec controleobras-queue-dev php [queue-commands]      # Worker
+docker compose exec app php [laravel-commands]      # Main app
+docker compose exec queue php [queue-commands]      # Worker
 ```
 
 ### REQUEST HELP ONLY WHEN BLOCKED
@@ -56,7 +57,53 @@ Ler o docker-compose.yml para entender os containers
 ### Error Monitoring
 ```bash
 # REAL-TIME MONITORING:
-docker compose logs -f controleobras-app-dev | grep -i error
+docker compose logs -f app | grep -i error
 ```
+
+### WebSockets & Broadcasting
+```bash
+# INICIAR SERVIDOR WEBSOCKET:
+docker compose exec app php artisan reverb:start
+
+# CONFIGURAR CANAIS PRIVADOS:
+# Sempre use canais privados com prefixo para garantir segurança
+# Exemplo: private-pdf.{userId}
+
+# TESTAR WEBSOCKETS:
+docker compose exec app php artisan reverb:status
+```
+
+### Boas Práticas para Implementação de WebSockets
+
+1. **Estrutura de Eventos**
+   - Implemente a interface `ShouldBroadcast` em todos os eventos WebSocket
+   - Use métodos `broadcastOn()`, `broadcastAs()` e `broadcastWith()` em cada evento
+   - Mantenha a estrutura de payload consistente entre eventos relacionados
+
+2. **Segurança de Canais**
+   - Use canais privados com escopo de usuário (`private-pdf.{userId}`)
+   - Configure autorização em `routes/channels.php`
+   - Valide o usuário antes de autorizar o canal
+
+3. **Serviços Centralizados**
+   - Crie serviços dedicados para lógica de notificação
+   - Use IDs únicos para jobs e processos
+   - Implemente métodos para cada tipo de notificação
+
+4. **Jobs Assíncronos**
+   - Adicione parâmetros para jobId e userId em jobs que usam WebSockets
+   - Notifique o início, progresso, conclusão e falhas
+   - Use try/catch para capturar e notificar erros
+
+5. **Controllers & Rotas**
+   - Retorne informações sobre o canal WebSocket nas respostas API
+   - Implemente endpoints para cancelamento e verificação de status
+   - Use grupos de rotas com prefixos para organizar endpoints relacionados
+
+6. **Documentação**
+   - Documente todos os canais WebSocket e seus formatos de payload
+   - Inclua instruções de teste para WebSockets
+   - Liste todos os arquivos envolvidos na implementação
+
 ---
 
