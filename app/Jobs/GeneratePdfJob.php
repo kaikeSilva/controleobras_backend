@@ -79,6 +79,7 @@ class GeneratePdfJob implements ShouldQueue
 
             Storage::disk(config('filesystems.pdf_disk', 'pdfs'))
                 ->put($this->filename, $response->body());
+            // log 
 
             // 5. Progresso: Finalizado
             $notificationService->notifyProgress(

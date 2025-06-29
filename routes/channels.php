@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Auth;
 | Broadcast Channels
 |--------------------------------------------------------------------------
 */
-
 // Canal privado para notificações de PDF do usuário
 Broadcast::channel('pdf.{userId}', function ($user, $userId) {
     // Usuário só pode acessar seu próprio canal
@@ -23,4 +22,8 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 // Canal de teste (manter o existente se houver)
 Broadcast::channel('message-channel', function ($user) {
     return true; // ou sua lógica específica
+});
+
+Broadcast::channel('notification-channel.{userId}', function ($user, $userId) {
+    return (int) $user->id === (int) $userId;
 });

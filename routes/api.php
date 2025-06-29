@@ -45,6 +45,8 @@ Route::prefix('dashboard')->middleware('auth:sanctum')->group(function () {
 });
 
 // Relatórios PDF com WebSockets
+// Download do arquivo
+Route::get('relatorios/download/{filename}', [DashboardController::class, 'downloadRelatorio'])->name('relatorio.download');
 Route::prefix('relatorios')->middleware('auth:sanctum')->group(function () {
     // Gerar relatório
     Route::get('/gastos', [DashboardController::class, 'relatorio'])->name('relatorio');
@@ -55,8 +57,6 @@ Route::prefix('relatorios')->middleware('auth:sanctum')->group(function () {
     // Status (fallback para casos sem WebSocket)
     Route::get('/status/{jobId}', [DashboardController::class, 'statusRelatorio'])->name('relatorio.status');
     
-    // Download do arquivo
-    Route::get('/download/{filename}', [DashboardController::class, 'downloadRelatorio'])->name('relatorio.download');
     
     // Verificar existência (legado)
     Route::get('/verificar/{filename}', [DashboardController::class, 'verificarRelatorio'])->name('relatorio.verificar');
