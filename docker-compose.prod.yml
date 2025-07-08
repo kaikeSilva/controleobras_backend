@@ -194,7 +194,6 @@ services:
 # VOLUMES - Dados Persistentes
 # =============================================================================
 volumes:
-  db_data:
   redis_data:
   app_storage:
   app_bootstrap:
