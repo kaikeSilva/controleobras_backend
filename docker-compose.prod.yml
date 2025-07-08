@@ -37,8 +37,8 @@ services:
         - USER_ID=${USER_ID:-1000}
         - GROUP_ID=${GROUP_ID:-1000}
         - APP_ENV=${APP_ENV:-production}
-    image: ${APP_NAME:-controleobras}-app:latest
-    container_name: ${APP_NAME:-controleobras}-php
+    image: ${REGISTRY_USER}/controleobras-app:${REGISTRY_TAG:-latest}
+    container_name: controleobras-php
     restart: always
     env_file:
       - .env
@@ -49,8 +49,6 @@ services:
       - app_storage:/var/www/storage
       - app_bootstrap:/var/www/bootstrap/cache
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
@@ -74,8 +72,8 @@ services:
         - USER_ID=${USER_ID:-1000}
         - GROUP_ID=${GROUP_ID:-1000}
         - APP_ENV=${APP_ENV:-production}
-    image: ${APP_NAME:-controleobras}-websocket:latest
-    container_name: ${APP_NAME:-controleobras}-websocket
+    image: ${REGISTRY_USER}/controleobras-app:${REGISTRY_TAG:-latest}
+    container_name: controleobras-websocket
     restart: always
     env_file:
       - .env
@@ -88,8 +86,6 @@ services:
       - app_storage:/var/www/storage
       - app_bootstrap:/var/www/bootstrap/cache
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy
       php:
@@ -115,8 +111,8 @@ services:
         - USER_ID=${USER_ID:-1000}
         - GROUP_ID=${GROUP_ID:-1000}
         - APP_ENV=${APP_ENV:-production}
-    image: ${APP_NAME:-controleobras}-queue:latest
-    container_name: ${APP_NAME:-controleobras}-queue
+    image: ${REGISTRY_USER}/controleobras-app:${REGISTRY_TAG:-latest}
+    container_name: controleobras-queue
     restart: always
     env_file:
       - .env
@@ -129,8 +125,6 @@ services:
       - app_bootstrap:/var/www/bootstrap/cache
       - ./queue-logs:/var/www/storage/logs
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy
       php:
@@ -156,8 +150,8 @@ services:
         - USER_ID=${USER_ID:-1000}
         - GROUP_ID=${GROUP_ID:-1000}
         - APP_ENV=${APP_ENV:-production}
-    image: ${APP_NAME:-controleobras}-scheduler:latest
-    container_name: ${APP_NAME:-controleobras}-scheduler
+    image: ${REGISTRY_USER}/controleobras-app:${REGISTRY_TAG:-latest}
+    container_name: controleobras-scheduler
     restart: always
     env_file:
       - .env
@@ -168,8 +162,6 @@ services:
       - app_storage:/var/www/storage
       - app_bootstrap:/var/www/bootstrap/cache
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy
       php:
@@ -178,37 +170,11 @@ services:
       - app-network
 
   # =============================================================================
-  # MYSQL DATABASE
-  # =============================================================================
-  db:
-    image: mysql:8.0
-    container_name: ${APP_NAME:-controleobras}-mysql
-    restart: always
-    environment:
-      - MYSQL_DATABASE=${DB_DATABASE}
-      - MYSQL_ROOT_PASSWORD=secret
-    volumes:
-      - db_data:/var/lib/mysql
-    networks:
-      - app-network
-    command: >
-      --default-authentication-plugin=mysql_native_password
-      --bind-address=0.0.0.0
-      --innodb-buffer-pool-size=256M
-      --max-connections=100
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-  # =============================================================================
   # REDIS - Cache e Sessões
   # =============================================================================
   redis:
     image: redis:7-alpine
-    container_name: ${APP_NAME:-controleobras}-redis
+    container_name: controleobras-redis
     restart: always
     environment:
       - REDIS_PASSWORD=secret
@@ -239,3 +205,4 @@ volumes:
 networks:
   app-network:
     driver: bridge
+    external: true
